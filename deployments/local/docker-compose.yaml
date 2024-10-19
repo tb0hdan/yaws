@@ -1,0 +1,15 @@
+version: "3.3"
+
+services:
+  yawsdb:
+    image: postgres:11-alpine
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    logging:
+      driver: "none"
+    restart: unless-stopped
+    volumes:
+      - ./db-data:/var/lib/postgresql/data
+      - ./backups:/backups

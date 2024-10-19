@@ -14,3 +14,9 @@ lint:
 
 run:
 	@go run ./cmd/app/main.go
+
+dbup:
+	@docker-compose -f deployments/local/docker-compose.yml up -d
+
+dbdown:
+	@docker-compose -f deployments/local/docker-compose.yml down
