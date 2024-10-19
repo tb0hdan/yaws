@@ -1,0 +1,22 @@
+run:
+  tests: false
+  modules-download-mode: readonly
+  allow-parallel-runners: false
+issues:
+  exclude-dirs:
+    - internal/server/api
+linters:
+  enable-all: true
+  disable:
+    - execinquery
+    - exportloopref
+    - depguard
+    - gci
+    - gofumpt
+    - gomnd
+    - ireturn
+    - nlreturn
+    - nolintlint
+    - varnamelen
+    - wrapcheck
+    - wsl

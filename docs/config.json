@@ -1,0 +1,8 @@
+{
+  "urls": [
+	{
+	  "url": "/docs/api.yaml",
+	  "name": "api"
+	}
+  ]
+}

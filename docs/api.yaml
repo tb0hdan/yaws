@@ -1,0 +1,324 @@
+openapi: "3.0.0"
+info:
+  title: Yet Another Web Store
+  version: 1.0.0
+servers:
+  - url: "http://localhost:8080"
+    description: "Development server"
+paths:
+  /api/v1/products:
+    get:
+      summary: "Products"
+      description: "Get list of products that can be sold"
+      operationId: "getProducts"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductList"
+        '404':
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: "Products"
+      description: "Add a new product(s) to the store"
+      operationId: "addProducts"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductList"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductList"
+        '400':
+          description: "Bad Request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/products/{id}:
+    get:
+      summary: "Get single product"
+      description: "Get product by ID"
+      operationId: "getProductById"
+      parameters:
+        - in: path
+          name: id
+          description: unique identifier for the product
+          required: true
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        '404':
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: "Update single product"
+      description: "Update product by ID"
+      operationId: "updateProductById"
+      parameters:
+        - in: path
+          name: id
+          description: unique identifier for the product
+          required: true
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        '404':
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: "Delete single product"
+      description: "Delete product by ID"
+      operationId: "deleteProductById"
+      parameters:
+        - in: path
+          name: id
+          description: unique identifier for the product
+          required: true
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        '404':
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+
+  /api/v1/orders:
+    get:
+      summary: "Get list of orders"
+      description: "Get list of orders made"
+      operationId: "getOrders"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderList"
+        '404':
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      summary: "Order management"
+      description: "Add a new sale to the store"
+      operationId: "createOrder"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Order"
+
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        '400':
+          description: "Bad Request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/orders/{id}:
+    get:
+      summary: "Get single order"
+      description: "Get order by ID"
+      operationId: "getOrderById"
+      parameters:
+        - in: path
+          name: id
+          description: unique identifier for the order
+          required: true
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        '404':
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/orders/{id}/status:
+    post:
+      summary: "Order management"
+      description: "Update single order"
+      operationId: "updateOrderStatus"
+
+      parameters:
+        - in: path
+          name: id
+          description: unique identifier for the order
+          required: true
+          schema:
+            type: string
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Order"
+
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        '400':
+          description: "Bad Request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/payment-webhook:
+    post:
+      summary: "Payment"
+      description: "Payment webhook"
+      operationId: "paymentWebhook"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Webhook"
+
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookResponse"
+        '400':
+          description: "Bad Request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+
+components:
+  schemas:
+    ProductList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Product"
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+          format: float
+      required:
+        - id
+        - name
+        - price
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        total:
+          type: string
+        discount:
+          type: string
+      required:
+        - id
+        - quantity
+    OrderList:
+      type: object
+      properties:
+        discount:
+          type: string
+        Order:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+        total:
+          type: string
+      required:
+        - discount
+        - Order
+    Webhook:
+      type: object
+      properties:
+        error:
+          type: string
+    WebhookResponse:
+      type: object
+      properties:
+        error:
+          type: string
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
