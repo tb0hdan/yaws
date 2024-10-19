@@ -42,7 +42,7 @@ func main() {
 		return c.String(http.StatusOK, c.Response().Header().Get(echo.HeaderXRequestID))
 	})
 	//
-	storage := store.New(store.Memory)
+	storage := store.New(store.PostgreSQL, "user=postgres password=postgres dbname=postgres sslmode=disable")
 	srv := server.NewWebStoreServer(logger, storage)
 
 	api.RegisterHandlers(e, &srv)
