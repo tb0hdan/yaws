@@ -19,6 +19,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // Error defines model for Error.
@@ -28,10 +29,12 @@ type Error struct {
 
 // Order defines model for Order.
 type Order struct {
-	Discount *string `json:"discount,omitempty"`
-	Id       string  `json:"id"`
-	Quantity int32   `json:"quantity"`
-	Total    *string `json:"total,omitempty"`
+	CustomerId    int32              `json:"customer_id"`
+	Id            openapi_types.UUID `json:"id"`
+	PaymentStatus *interface{}       `json:"payment_status,omitempty"`
+	Products      []Product          `json:"products"`
+	Status        *interface{}       `json:"status,omitempty"`
+	TotalPrice    string             `json:"total_price"`
 }
 
 // OrderList defines model for OrderList.
@@ -43,9 +46,10 @@ type OrderList struct {
 
 // Product defines model for Product.
 type Product struct {
-	Id    string  `json:"id"`
-	Name  string  `json:"name"`
-	Price float32 `json:"price"`
+	Id       openapi_types.UUID `json:"id"`
+	Name     string             `json:"name"`
+	Price    string             `json:"price"`
+	Quantity *int32             `json:"quantity,omitempty"`
 }
 
 // ProductList defines model for ProductList.
@@ -59,6 +63,33 @@ type Webhook struct {
 // WebhookResponse defines model for WebhookResponse.
 type WebhookResponse struct {
 	Error *string `json:"error,omitempty"`
+}
+
+// GetOrdersParams defines parameters for GetOrders.
+type GetOrdersParams struct {
+	// Limit maximum number of orders to return
+	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset number of orders to skip
+	Offset *int32 `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Status filter orders by status
+	Status *string `form:"status,omitempty" json:"status,omitempty"`
+
+	// PaymentStatus filter orders by payment status
+	PaymentStatus *string `form:"payment_status,omitempty" json:"payment_status,omitempty"`
+}
+
+// GetProductsParams defines parameters for GetProducts.
+type GetProductsParams struct {
+	// Limit maximum number of products to return
+	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset number of products to skip
+	Offset *int32 `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// MinQuantity filter products by minimum quantity
+	MinQuantity *int32 `form:"min_quantity,omitempty" json:"min_quantity,omitempty"`
 }
 
 // CreateOrderJSONRequestBody defines body for CreateOrder for application/json ContentType.
@@ -147,7 +178,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 // The interface specification for the client above.
 type ClientInterface interface {
 	// GetOrders request
-	GetOrders(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetOrders(ctx context.Context, params *GetOrdersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateOrderWithBody request with any body
 	CreateOrderWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -168,7 +199,7 @@ type ClientInterface interface {
 	PaymentWebhook(ctx context.Context, body PaymentWebhookJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetProducts request
-	GetProducts(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetProducts(ctx context.Context, params *GetProductsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// AddProductsWithBody request with any body
 	AddProductsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -176,17 +207,17 @@ type ClientInterface interface {
 	AddProducts(ctx context.Context, body AddProductsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteProductById request
-	DeleteProductById(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteProductById(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetProductById request
-	GetProductById(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetProductById(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateProductById request
-	UpdateProductById(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateProductById(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) GetOrders(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetOrdersRequest(c.Server)
+func (c *Client) GetOrders(ctx context.Context, params *GetOrdersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrdersRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -281,8 +312,8 @@ func (c *Client) PaymentWebhook(ctx context.Context, body PaymentWebhookJSONRequ
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetProducts(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetProductsRequest(c.Server)
+func (c *Client) GetProducts(ctx context.Context, params *GetProductsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetProductsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -317,7 +348,7 @@ func (c *Client) AddProducts(ctx context.Context, body AddProductsJSONRequestBod
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteProductById(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) DeleteProductById(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteProductByIdRequest(c.Server, id)
 	if err != nil {
 		return nil, err
@@ -329,7 +360,7 @@ func (c *Client) DeleteProductById(ctx context.Context, id string, reqEditors ..
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetProductById(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetProductById(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetProductByIdRequest(c.Server, id)
 	if err != nil {
 		return nil, err
@@ -341,7 +372,7 @@ func (c *Client) GetProductById(ctx context.Context, id string, reqEditors ...Re
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateProductById(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateProductById(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateProductByIdRequest(c.Server, id)
 	if err != nil {
 		return nil, err
@@ -354,7 +385,7 @@ func (c *Client) UpdateProductById(ctx context.Context, id string, reqEditors ..
 }
 
 // NewGetOrdersRequest generates requests for GetOrders
-func NewGetOrdersRequest(server string) (*http.Request, error) {
+func NewGetOrdersRequest(server string, params *GetOrdersParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -370,6 +401,76 @@ func NewGetOrdersRequest(server string) (*http.Request, error) {
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Status != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "status", runtime.ParamLocationQuery, *params.Status); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PaymentStatus != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "payment_status", runtime.ParamLocationQuery, *params.PaymentStatus); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -542,7 +643,7 @@ func NewPaymentWebhookRequestWithBody(server string, contentType string, body io
 }
 
 // NewGetProductsRequest generates requests for GetProducts
-func NewGetProductsRequest(server string) (*http.Request, error) {
+func NewGetProductsRequest(server string, params *GetProductsParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -558,6 +659,60 @@ func NewGetProductsRequest(server string) (*http.Request, error) {
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.MinQuantity != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "min_quantity", runtime.ParamLocationQuery, *params.MinQuantity); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -609,7 +764,7 @@ func NewAddProductsRequestWithBody(server string, contentType string, body io.Re
 }
 
 // NewDeleteProductByIdRequest generates requests for DeleteProductById
-func NewDeleteProductByIdRequest(server string, id string) (*http.Request, error) {
+func NewDeleteProductByIdRequest(server string, id openapi_types.UUID) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -643,7 +798,7 @@ func NewDeleteProductByIdRequest(server string, id string) (*http.Request, error
 }
 
 // NewGetProductByIdRequest generates requests for GetProductById
-func NewGetProductByIdRequest(server string, id string) (*http.Request, error) {
+func NewGetProductByIdRequest(server string, id openapi_types.UUID) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -677,7 +832,7 @@ func NewGetProductByIdRequest(server string, id string) (*http.Request, error) {
 }
 
 // NewUpdateProductByIdRequest generates requests for UpdateProductById
-func NewUpdateProductByIdRequest(server string, id string) (*http.Request, error) {
+func NewUpdateProductByIdRequest(server string, id openapi_types.UUID) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -754,7 +909,7 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// GetOrdersWithResponse request
-	GetOrdersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOrdersResponse, error)
+	GetOrdersWithResponse(ctx context.Context, params *GetOrdersParams, reqEditors ...RequestEditorFn) (*GetOrdersResponse, error)
 
 	// CreateOrderWithBodyWithResponse request with any body
 	CreateOrderWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error)
@@ -775,7 +930,7 @@ type ClientWithResponsesInterface interface {
 	PaymentWebhookWithResponse(ctx context.Context, body PaymentWebhookJSONRequestBody, reqEditors ...RequestEditorFn) (*PaymentWebhookResponse, error)
 
 	// GetProductsWithResponse request
-	GetProductsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetProductsResponse, error)
+	GetProductsWithResponse(ctx context.Context, params *GetProductsParams, reqEditors ...RequestEditorFn) (*GetProductsResponse, error)
 
 	// AddProductsWithBodyWithResponse request with any body
 	AddProductsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddProductsResponse, error)
@@ -783,13 +938,13 @@ type ClientWithResponsesInterface interface {
 	AddProductsWithResponse(ctx context.Context, body AddProductsJSONRequestBody, reqEditors ...RequestEditorFn) (*AddProductsResponse, error)
 
 	// DeleteProductByIdWithResponse request
-	DeleteProductByIdWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteProductByIdResponse, error)
+	DeleteProductByIdWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*DeleteProductByIdResponse, error)
 
 	// GetProductByIdWithResponse request
-	GetProductByIdWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetProductByIdResponse, error)
+	GetProductByIdWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetProductByIdResponse, error)
 
 	// UpdateProductByIdWithResponse request
-	UpdateProductByIdWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*UpdateProductByIdResponse, error)
+	UpdateProductByIdWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*UpdateProductByIdResponse, error)
 }
 
 type GetOrdersResponse struct {
@@ -1023,8 +1178,8 @@ func (r UpdateProductByIdResponse) StatusCode() int {
 }
 
 // GetOrdersWithResponse request returning *GetOrdersResponse
-func (c *ClientWithResponses) GetOrdersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOrdersResponse, error) {
-	rsp, err := c.GetOrders(ctx, reqEditors...)
+func (c *ClientWithResponses) GetOrdersWithResponse(ctx context.Context, params *GetOrdersParams, reqEditors ...RequestEditorFn) (*GetOrdersResponse, error) {
+	rsp, err := c.GetOrders(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -1092,8 +1247,8 @@ func (c *ClientWithResponses) PaymentWebhookWithResponse(ctx context.Context, bo
 }
 
 // GetProductsWithResponse request returning *GetProductsResponse
-func (c *ClientWithResponses) GetProductsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetProductsResponse, error) {
-	rsp, err := c.GetProducts(ctx, reqEditors...)
+func (c *ClientWithResponses) GetProductsWithResponse(ctx context.Context, params *GetProductsParams, reqEditors ...RequestEditorFn) (*GetProductsResponse, error) {
+	rsp, err := c.GetProducts(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -1118,7 +1273,7 @@ func (c *ClientWithResponses) AddProductsWithResponse(ctx context.Context, body 
 }
 
 // DeleteProductByIdWithResponse request returning *DeleteProductByIdResponse
-func (c *ClientWithResponses) DeleteProductByIdWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteProductByIdResponse, error) {
+func (c *ClientWithResponses) DeleteProductByIdWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*DeleteProductByIdResponse, error) {
 	rsp, err := c.DeleteProductById(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -1127,7 +1282,7 @@ func (c *ClientWithResponses) DeleteProductByIdWithResponse(ctx context.Context,
 }
 
 // GetProductByIdWithResponse request returning *GetProductByIdResponse
-func (c *ClientWithResponses) GetProductByIdWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetProductByIdResponse, error) {
+func (c *ClientWithResponses) GetProductByIdWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetProductByIdResponse, error) {
 	rsp, err := c.GetProductById(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -1136,7 +1291,7 @@ func (c *ClientWithResponses) GetProductByIdWithResponse(ctx context.Context, id
 }
 
 // UpdateProductByIdWithResponse request returning *UpdateProductByIdResponse
-func (c *ClientWithResponses) UpdateProductByIdWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*UpdateProductByIdResponse, error) {
+func (c *ClientWithResponses) UpdateProductByIdWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*UpdateProductByIdResponse, error) {
 	rsp, err := c.UpdateProductById(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -1478,7 +1633,7 @@ func ParseUpdateProductByIdResponse(rsp *http.Response) (*UpdateProductByIdRespo
 type ServerInterface interface {
 	// Get list of orders
 	// (GET /api/v1/orders)
-	GetOrders(ctx echo.Context) error
+	GetOrders(ctx echo.Context, params GetOrdersParams) error
 	// Order management
 	// (POST /api/v1/orders)
 	CreateOrder(ctx echo.Context) error
@@ -1493,19 +1648,19 @@ type ServerInterface interface {
 	PaymentWebhook(ctx echo.Context) error
 	// Products
 	// (GET /api/v1/products)
-	GetProducts(ctx echo.Context) error
+	GetProducts(ctx echo.Context, params GetProductsParams) error
 	// Products
 	// (POST /api/v1/products)
 	AddProducts(ctx echo.Context) error
 	// Delete single product
 	// (DELETE /api/v1/products/{id})
-	DeleteProductById(ctx echo.Context, id string) error
+	DeleteProductById(ctx echo.Context, id openapi_types.UUID) error
 	// Get single product
 	// (GET /api/v1/products/{id})
-	GetProductById(ctx echo.Context, id string) error
+	GetProductById(ctx echo.Context, id openapi_types.UUID) error
 	// Update single product
 	// (PUT /api/v1/products/{id})
-	UpdateProductById(ctx echo.Context, id string) error
+	UpdateProductById(ctx echo.Context, id openapi_types.UUID) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -1517,8 +1672,38 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) GetOrders(ctx echo.Context) error {
 	var err error
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetOrdersParams
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", ctx.QueryParams(), &params.Limit)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", ctx.QueryParams(), &params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "status", ctx.QueryParams(), &params.Status)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter status: %s", err))
+	}
+
+	// ------------- Optional query parameter "payment_status" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "payment_status", ctx.QueryParams(), &params.PaymentStatus)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter payment_status: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetOrders(ctx)
+	err = w.Handler.GetOrders(ctx, params)
 	return err
 }
 
@@ -1576,8 +1761,31 @@ func (w *ServerInterfaceWrapper) PaymentWebhook(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetProducts(ctx echo.Context) error {
 	var err error
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetProductsParams
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", ctx.QueryParams(), &params.Limit)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", ctx.QueryParams(), &params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
+	}
+
+	// ------------- Optional query parameter "min_quantity" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "min_quantity", ctx.QueryParams(), &params.MinQuantity)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter min_quantity: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetProducts(ctx)
+	err = w.Handler.GetProducts(ctx, params)
 	return err
 }
 
@@ -1594,7 +1802,7 @@ func (w *ServerInterfaceWrapper) AddProducts(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) DeleteProductById(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
-	var id string
+	var id openapi_types.UUID
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -1610,7 +1818,7 @@ func (w *ServerInterfaceWrapper) DeleteProductById(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetProductById(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
-	var id string
+	var id openapi_types.UUID
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -1626,7 +1834,7 @@ func (w *ServerInterfaceWrapper) GetProductById(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) UpdateProductById(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
-	var id string
+	var id openapi_types.UUID
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -1682,21 +1890,24 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

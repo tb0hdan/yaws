@@ -1,0 +1,7 @@
+filename: "mock_{{.InterfaceName | snakecase }}.go"
+with-expecter: true
+packages:
+  yaws/internal/store:
+    config:
+    interfaces:
+      Store:

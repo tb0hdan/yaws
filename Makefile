@@ -1,4 +1,4 @@
-.PHONY: api
+.PHONY: api mocks
 
 DEV_IMAGE=yaws-dev-image
 
@@ -8,6 +8,9 @@ DEV_IMAGE=yaws-dev-image
 
 api: .image
 	@docker run --rm -it -v $(PWD):/app -w /app $(DEV_IMAGE) /bin/sh /app/deployments/local/build_api.sh
+
+mocks: .image
+	@docker run --rm -it -v $(PWD):/app -w /app $(DEV_IMAGE) /bin/sh /app/deployments/local/build_mocks.sh
 
 lint:
 	@golangci-lint run ./...
