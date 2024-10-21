@@ -7,6 +7,7 @@ require (
 	github.com/google/uuid v1.5.0
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/oapi-codegen/runtime v1.1.1
+	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.33.0
 	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
 	github.com/stretchr/testify v1.9.0

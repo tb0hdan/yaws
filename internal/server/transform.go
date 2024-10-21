@@ -90,7 +90,7 @@ func FromModelsCustomerListToAPICustomerList(customers []models.Customer) api.Cu
 
 func FromModelsCustomerToAPICustomer(customer models.Customer) api.Customer {
 	return api.Customer{
-		Id:   customer.Id,
+		Id:   customer.ID,
 		Name: customer.Name,
 	}
 }

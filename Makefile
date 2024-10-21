@@ -19,7 +19,10 @@ run:
 	@go run ./cmd/app/main.go
 
 dbup:
-	@docker-compose -f deployments/local/docker-compose.yml up -d
+	@docker compose -f deployments/local/docker-compose.yaml  up -d --remove-orphans
 
 dbdown:
-	@docker-compose -f deployments/local/docker-compose.yml down
+	@docker compose -f deployments/local/docker-compose.yaml down
+
+dbpurge: dbdown
+	@docker volume rm local_yaws_db_data local_yaws_db_backups

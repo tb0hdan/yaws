@@ -8,6 +8,7 @@ import (
 	"yaws/internal/server"
 	"yaws/internal/server/api"
 	"yaws/internal/store"
+	"yaws/internal/transactional"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -42,8 +43,15 @@ func main() {
 		return c.String(http.StatusOK, c.Response().Header().Get(echo.HeaderXRequestID))
 	})
 	//
-	storage := store.New(store.PostgreSQL, "user=postgres password=postgres dbname=postgres sslmode=disable")
-	srv := server.NewWebStoreServer(logger, storage)
+	storage := store.New(store.PostgreSQL, "user=postgres password=postgres dbname=postgres sslmode=disable host=localhost")
+	err := storage.Connect()
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to connect to storage")
+	}
+
+	sender := transactional.New(transactional.SendGrid, "SENDGRID_API_KEY")
+
+	srv := server.NewWebStoreServer(logger, storage, sender)
 
 	api.RegisterHandlers(e, &srv)
 

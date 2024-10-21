@@ -33,7 +33,7 @@ const (
 func New(storeType, connection string) Store {
 	switch storeType {
 	case PostgreSQL:
-		return &postgresql.Store{Connection: connection}
+		return postgresql.New(connection)
 	default:
 		return nil
 	}

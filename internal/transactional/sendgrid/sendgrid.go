@@ -3,7 +3,6 @@ package sendgrid
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"yaws/pkg/types"
 
@@ -12,14 +11,15 @@ import (
 )
 
 type SendGrid struct {
+	APIKey string
 }
 
 func (s SendGrid) Send(from, to types.Contact, subject string, message interface{}) error {
 	mailFrom := mail.NewEmail(from.Name, from.Email)
-	mailTo := mail.NewEmail(from.Name, from.Email)
+	mailTo := mail.NewEmail(to.Name, to.Email)
 	htmlContent := fmt.Sprintf("<strong>%s</strong>", message)
 	mailMessage := mail.NewSingleEmail(mailFrom, subject, mailTo, message.(string), htmlContent)
-	client := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
+	client := sendgrid.NewSendClient(s.APIKey)
 	response, err := client.Send(mailMessage)
 	if err != nil {
 		log.Println(err)
@@ -29,4 +29,8 @@ func (s SendGrid) Send(from, to types.Contact, subject string, message interface
 		fmt.Println(response.Headers)
 	}
 	return err
+}
+
+func New(apiKey string) SendGrid {
+	return SendGrid{APIKey: apiKey}
 }

@@ -5,10 +5,19 @@ import (
 	"yaws/pkg/types"
 )
 
+const (
+	SendGrid = "sendgrid"
+)
+
 type Transactional interface {
 	Send(from, to types.Contact, subject string, message interface{}) error
 }
 
-func New() Transactional {
-	return &sendgrid.SendGrid{}
+func New(senderType, apiKey string) Transactional {
+	switch senderType {
+	case SendGrid:
+		return sendgrid.New(apiKey)
+	default:
+		return nil
+	}
 }

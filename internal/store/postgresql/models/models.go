@@ -1,23 +1,25 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type Customer struct {
 	gorm.Model
-	Id      int32 `gorm:"primaryKey"`
+	ID      int32 `gorm:"primaryKey"`
 	Name    string
 	Email   string
 	Phone   string
 	Address string
-	Orders  []Order
+	Orders  []Order `gorm:"foreignKey:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
 
 type Product struct {
 	gorm.Model
-	Id       uuid.UUID `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()"`
+	ID       uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Name     string
 	Price    string
 	Quantity int32
@@ -25,14 +27,14 @@ type Product struct {
 
 type Order struct {
 	gorm.Model
-	Id            uuid.UUID `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()"`
+	ID            uuid.UUID `gorm:"primaryKey;type:uuid"`
 	CustomerId    int32
 	PaymentStatus string
-	Products      []Product
+	Products      []Product `gorm:"foreignKey:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Status        string
 	TotalPrice    string
-	CreatedAt     string
-	UpdatedAt     string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 type Webhook struct {
