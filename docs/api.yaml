@@ -1,11 +1,147 @@
 openapi: "3.0.0"
 info:
   title: Yet Another Web Store
-  version: 1.0.2
+  version: 1.0.3
 servers:
   - url: "http://localhost:8080"
     description: "Development server"
 paths:
+  /api/v1/customers:
+    get:
+      summary: "Customers"
+      description: "Get list of customers"
+      operationId: "getCustomers"
+      parameters:
+        - in: query
+          name: limit
+          description: maximum number of customers to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - in: query
+          name: offset
+          description: number of customers to skip
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerList"
+        '404':
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: "Customers"
+      description: "Add a new customer(s) to the store"
+      operationId: "addCustomers"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerList"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerList"
+        '400':
+          description: "Bad Request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/customers/{id}:
+    get:
+      summary: "Get single customer"
+      description: "Get customer by ID"
+      operationId: "getCustomerById"
+      parameters:
+        - in: path
+          name: id
+          description: unique identifier for the customer
+          required: true
+          schema:
+            type: integer
+            format: int32
+
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        '404':
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: "Update single customer"
+      description: "Update customer by ID"
+      operationId: "updateCustomerById"
+      parameters:
+        - in: path
+          name: id
+          description: unique identifier for the customer
+          required: true
+          schema:
+            type: integer
+            format: int32
+
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        '404':
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: "Delete single customer"
+      description: "Delete customer by ID"
+      operationId: "deleteCustomerById"
+      parameters:
+        - in: path
+          name: id
+          description: unique identifier for the customer
+          required: true
+          schema:
+            type: integer
+            format: int32
+
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        '404':
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    
   /api/v1/products:
     get:
       summary: "Products"
@@ -314,6 +450,32 @@ paths:
 
 components:
   schemas:
+    CustomerList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Customer"
+    Customer:
+        type: object
+        properties:
+          id:
+            type: integer
+            format: int32
+          name:
+            type: string
+          email:
+            type: string
+            format: email
+          phone:
+            type: string
+            format: phone
+          address:
+            type: string
+        required:
+            - id
+            - name
+            - email
+            - phone
+            - address
     ProductList:
       type: array
       items:

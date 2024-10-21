@@ -70,6 +70,8 @@ func (s *Store) Connect() error {
 	}
 	s.db = db
 	// Migrate the schema
+	db.AutoMigrate(&models.Customer{})
+	db.AutoMigrate(&models.Order{})
 	db.AutoMigrate(&models.Product{})
 	return nil
 }

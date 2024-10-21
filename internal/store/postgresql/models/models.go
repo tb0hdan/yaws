@@ -5,6 +5,16 @@ import (
 	"gorm.io/gorm"
 )
 
+type Customer struct {
+	gorm.Model
+	Id      int32 `gorm:"primaryKey"`
+	Name    string
+	Email   string
+	Phone   string
+	Address string
+	Orders  []Order
+}
+
 type Product struct {
 	gorm.Model
 	Id       uuid.UUID `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()"`
@@ -21,6 +31,8 @@ type Order struct {
 	Products      []Product
 	Status        string
 	TotalPrice    string
+	CreatedAt     string
+	UpdatedAt     string
 }
 
 type Webhook struct {

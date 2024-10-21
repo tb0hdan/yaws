@@ -22,6 +22,18 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Customer defines model for Customer.
+type Customer struct {
+	Address string              `json:"address"`
+	Email   openapi_types.Email `json:"email"`
+	Id      int32               `json:"id"`
+	Name    string              `json:"name"`
+	Phone   string              `json:"phone"`
+}
+
+// CustomerList defines model for CustomerList.
+type CustomerList = []Customer
+
 // Error defines model for Error.
 type Error struct {
 	Error *string `json:"error,omitempty"`
@@ -66,6 +78,15 @@ type WebhookResponse struct {
 	Error *string `json:"error,omitempty"`
 }
 
+// GetCustomersParams defines parameters for GetCustomers.
+type GetCustomersParams struct {
+	// Limit maximum number of customers to return
+	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset number of customers to skip
+	Offset *int32 `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
 // GetOrdersParams defines parameters for GetOrders.
 type GetOrdersParams struct {
 	// Limit maximum number of orders to return
@@ -92,6 +113,9 @@ type GetProductsParams struct {
 	// MinQuantity filter products by minimum quantity
 	MinQuantity *int32 `form:"min_quantity,omitempty" json:"min_quantity,omitempty"`
 }
+
+// AddCustomersJSONRequestBody defines body for AddCustomers for application/json ContentType.
+type AddCustomersJSONRequestBody = CustomerList
 
 // CreateOrderJSONRequestBody defines body for CreateOrder for application/json ContentType.
 type CreateOrderJSONRequestBody = Order
@@ -178,6 +202,23 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// GetCustomers request
+	GetCustomers(ctx context.Context, params *GetCustomersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AddCustomersWithBody request with any body
+	AddCustomersWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	AddCustomers(ctx context.Context, body AddCustomersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteCustomerById request
+	DeleteCustomerById(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCustomerById request
+	GetCustomerById(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateCustomerById request
+	UpdateCustomerById(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetOrders request
 	GetOrders(ctx context.Context, params *GetOrdersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -215,6 +256,78 @@ type ClientInterface interface {
 
 	// UpdateProductById request
 	UpdateProductById(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *Client) GetCustomers(ctx context.Context, params *GetCustomersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCustomersRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AddCustomersWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAddCustomersRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AddCustomers(ctx context.Context, body AddCustomersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAddCustomersRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteCustomerById(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteCustomerByIdRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetCustomerById(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCustomerByIdRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateCustomerById(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomerByIdRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) GetOrders(ctx context.Context, params *GetOrdersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -383,6 +496,213 @@ func (c *Client) UpdateProductById(ctx context.Context, id openapi_types.UUID, r
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewGetCustomersRequest generates requests for GetCustomers
+func NewGetCustomersRequest(server string, params *GetCustomersParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/customers")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewAddCustomersRequest calls the generic AddCustomers builder with application/json body
+func NewAddCustomersRequest(server string, body AddCustomersJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewAddCustomersRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewAddCustomersRequestWithBody generates requests for AddCustomers with any type of body
+func NewAddCustomersRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/customers")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteCustomerByIdRequest generates requests for DeleteCustomerById
+func NewDeleteCustomerByIdRequest(server string, id int32) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/customers/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetCustomerByIdRequest generates requests for GetCustomerById
+func NewGetCustomerByIdRequest(server string, id int32) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/customers/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateCustomerByIdRequest generates requests for UpdateCustomerById
+func NewUpdateCustomerByIdRequest(server string, id int32) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/customers/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewGetOrdersRequest generates requests for GetOrders
@@ -909,6 +1229,23 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// GetCustomersWithResponse request
+	GetCustomersWithResponse(ctx context.Context, params *GetCustomersParams, reqEditors ...RequestEditorFn) (*GetCustomersResponse, error)
+
+	// AddCustomersWithBodyWithResponse request with any body
+	AddCustomersWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddCustomersResponse, error)
+
+	AddCustomersWithResponse(ctx context.Context, body AddCustomersJSONRequestBody, reqEditors ...RequestEditorFn) (*AddCustomersResponse, error)
+
+	// DeleteCustomerByIdWithResponse request
+	DeleteCustomerByIdWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*DeleteCustomerByIdResponse, error)
+
+	// GetCustomerByIdWithResponse request
+	GetCustomerByIdWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*GetCustomerByIdResponse, error)
+
+	// UpdateCustomerByIdWithResponse request
+	UpdateCustomerByIdWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*UpdateCustomerByIdResponse, error)
+
 	// GetOrdersWithResponse request
 	GetOrdersWithResponse(ctx context.Context, params *GetOrdersParams, reqEditors ...RequestEditorFn) (*GetOrdersResponse, error)
 
@@ -946,6 +1283,121 @@ type ClientWithResponsesInterface interface {
 
 	// UpdateProductByIdWithResponse request
 	UpdateProductByIdWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*UpdateProductByIdResponse, error)
+}
+
+type GetCustomersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CustomerList
+	JSON404      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCustomersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCustomersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type AddCustomersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CustomerList
+	JSON400      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r AddCustomersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AddCustomersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteCustomerByIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Customer
+	JSON404      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteCustomerByIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteCustomerByIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetCustomerByIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Customer
+	JSON404      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCustomerByIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCustomerByIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateCustomerByIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Customer
+	JSON404      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateCustomerByIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateCustomerByIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetOrdersResponse struct {
@@ -1178,6 +1630,59 @@ func (r UpdateProductByIdResponse) StatusCode() int {
 	return 0
 }
 
+// GetCustomersWithResponse request returning *GetCustomersResponse
+func (c *ClientWithResponses) GetCustomersWithResponse(ctx context.Context, params *GetCustomersParams, reqEditors ...RequestEditorFn) (*GetCustomersResponse, error) {
+	rsp, err := c.GetCustomers(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCustomersResponse(rsp)
+}
+
+// AddCustomersWithBodyWithResponse request with arbitrary body returning *AddCustomersResponse
+func (c *ClientWithResponses) AddCustomersWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddCustomersResponse, error) {
+	rsp, err := c.AddCustomersWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAddCustomersResponse(rsp)
+}
+
+func (c *ClientWithResponses) AddCustomersWithResponse(ctx context.Context, body AddCustomersJSONRequestBody, reqEditors ...RequestEditorFn) (*AddCustomersResponse, error) {
+	rsp, err := c.AddCustomers(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAddCustomersResponse(rsp)
+}
+
+// DeleteCustomerByIdWithResponse request returning *DeleteCustomerByIdResponse
+func (c *ClientWithResponses) DeleteCustomerByIdWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*DeleteCustomerByIdResponse, error) {
+	rsp, err := c.DeleteCustomerById(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteCustomerByIdResponse(rsp)
+}
+
+// GetCustomerByIdWithResponse request returning *GetCustomerByIdResponse
+func (c *ClientWithResponses) GetCustomerByIdWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*GetCustomerByIdResponse, error) {
+	rsp, err := c.GetCustomerById(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCustomerByIdResponse(rsp)
+}
+
+// UpdateCustomerByIdWithResponse request returning *UpdateCustomerByIdResponse
+func (c *ClientWithResponses) UpdateCustomerByIdWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*UpdateCustomerByIdResponse, error) {
+	rsp, err := c.UpdateCustomerById(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCustomerByIdResponse(rsp)
+}
+
 // GetOrdersWithResponse request returning *GetOrdersResponse
 func (c *ClientWithResponses) GetOrdersWithResponse(ctx context.Context, params *GetOrdersParams, reqEditors ...RequestEditorFn) (*GetOrdersResponse, error) {
 	rsp, err := c.GetOrders(ctx, params, reqEditors...)
@@ -1298,6 +1803,171 @@ func (c *ClientWithResponses) UpdateProductByIdWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseUpdateProductByIdResponse(rsp)
+}
+
+// ParseGetCustomersResponse parses an HTTP response from a GetCustomersWithResponse call
+func ParseGetCustomersResponse(rsp *http.Response) (*GetCustomersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCustomersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomerList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseAddCustomersResponse parses an HTTP response from a AddCustomersWithResponse call
+func ParseAddCustomersResponse(rsp *http.Response) (*AddCustomersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AddCustomersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomerList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteCustomerByIdResponse parses an HTTP response from a DeleteCustomerByIdWithResponse call
+func ParseDeleteCustomerByIdResponse(rsp *http.Response) (*DeleteCustomerByIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteCustomerByIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Customer
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCustomerByIdResponse parses an HTTP response from a GetCustomerByIdWithResponse call
+func ParseGetCustomerByIdResponse(rsp *http.Response) (*GetCustomerByIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCustomerByIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Customer
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateCustomerByIdResponse parses an HTTP response from a UpdateCustomerByIdWithResponse call
+func ParseUpdateCustomerByIdResponse(rsp *http.Response) (*UpdateCustomerByIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateCustomerByIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Customer
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseGetOrdersResponse parses an HTTP response from a GetOrdersWithResponse call
@@ -1632,6 +2302,21 @@ func ParseUpdateProductByIdResponse(rsp *http.Response) (*UpdateProductByIdRespo
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Customers
+	// (GET /api/v1/customers)
+	GetCustomers(ctx echo.Context, params GetCustomersParams) error
+	// Customers
+	// (POST /api/v1/customers)
+	AddCustomers(ctx echo.Context) error
+	// Delete single customer
+	// (DELETE /api/v1/customers/{id})
+	DeleteCustomerById(ctx echo.Context, id int32) error
+	// Get single customer
+	// (GET /api/v1/customers/{id})
+	GetCustomerById(ctx echo.Context, id int32) error
+	// Update single customer
+	// (PUT /api/v1/customers/{id})
+	UpdateCustomerById(ctx echo.Context, id int32) error
 	// Get list of orders
 	// (GET /api/v1/orders)
 	GetOrders(ctx echo.Context, params GetOrdersParams) error
@@ -1667,6 +2352,88 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// GetCustomers converts echo context to params.
+func (w *ServerInterfaceWrapper) GetCustomers(ctx echo.Context) error {
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCustomersParams
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", ctx.QueryParams(), &params.Limit)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", ctx.QueryParams(), &params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetCustomers(ctx, params)
+	return err
+}
+
+// AddCustomers converts echo context to params.
+func (w *ServerInterfaceWrapper) AddCustomers(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.AddCustomers(ctx)
+	return err
+}
+
+// DeleteCustomerById converts echo context to params.
+func (w *ServerInterfaceWrapper) DeleteCustomerById(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeleteCustomerById(ctx, id)
+	return err
+}
+
+// GetCustomerById converts echo context to params.
+func (w *ServerInterfaceWrapper) GetCustomerById(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetCustomerById(ctx, id)
+	return err
+}
+
+// UpdateCustomerById converts echo context to params.
+func (w *ServerInterfaceWrapper) UpdateCustomerById(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UpdateCustomerById(ctx, id)
+	return err
 }
 
 // GetOrders converts echo context to params.
@@ -1875,6 +2642,11 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/api/v1/customers", wrapper.GetCustomers)
+	router.POST(baseURL+"/api/v1/customers", wrapper.AddCustomers)
+	router.DELETE(baseURL+"/api/v1/customers/:id", wrapper.DeleteCustomerById)
+	router.GET(baseURL+"/api/v1/customers/:id", wrapper.GetCustomerById)
+	router.PUT(baseURL+"/api/v1/customers/:id", wrapper.UpdateCustomerById)
 	router.GET(baseURL+"/api/v1/orders", wrapper.GetOrders)
 	router.POST(baseURL+"/api/v1/orders", wrapper.CreateOrder)
 	router.GET(baseURL+"/api/v1/orders/:id", wrapper.GetOrderById)
@@ -1891,25 +2663,28 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/+xYTW8bNxD9KwTbQwuoXsXJIdibXbeF0aI2EhRGERgGtRxZTJYfJodOBUP/vSC5X5Io",
-	"WakjRwV8srw7mjcz781wqAdaaWm0AoWOlg/UVTOQLH78xVptwwdjtQGLAuJjaB/j3AAtqUMr1C1dLEbt",
-	"Ez35CBXSxYheWA4ZF5V3qCXYG8HDv1NtJUNaUqHw9THt/AiFcAs2OFox9F7w3q6NYEQNm0tQeOOQoU/R",
-	"Ki9p+YF6ZVj8TvNnykQNnF6HL1nNfZXSFwgyfvjewpSW9LuiL0/R1Ka4TF+gfcbMWjYP/68DG1A8RDeK",
-	"ha4BIcBXTFXQBoAaWX1jrKggX1cLd15Y4MFfjH5YwEECy66uNxHyh3C4TkrH1U41SNaZCnDhKu0VZjJp",
-	"wns8x85Hq6BcKi0La4nsqBXFJGSD3ETEiN55plDgfCfR5niLmC3ClqRahp4qxyuYzLT+tF4jHcp685+7",
-	"ajt9nfO1r+ZSbmJ8B85o5eApAyc8Emqqo7HAOrz7G5CcKI0zsOQKJuQ9ahs4uAfrhFa0pK+OxkfHIRJt",
-	"QDEjaElfH42PxjF8nMUYCmZEcf+qiKnFJ7cQGeLgKisMJle/AZJaOCR6SpIpkYwHuJAQC1bnPNldJE8B",
-	"wzIJGN1+WHUo2T9CekmUlxOwA7eoiQX0VtGQMi3pnQc7byVW0lpIEfoniWRHwa6i51DdJ2E2YOrp1MGT",
-	"QaeixgCaECdz0mgnj9m97DHXZPIoQqPS7UgrUt6GeB36Ick5auV4PI7HnlYIaTIyY2pRRUEUH12I6mHg",
-	"79HBG+dDlPtyZhe/Bx2/Gb/5anBpCchA/amR/Kq94rERnZeS2Xm2BeII0S7TLiecE0YUfCaO1RDUhTMg",
-	"runQ5Zb52QJDSMdBGjfg8FTz+detbEq1n2ZoPSz2Tec2Ksf7p/KUcfIuFXSFzBgdkUyxWwjij6+XZ2Hx",
-	"IPhi60CMdqHNzs82DsLT+Tl/bBZ6Je48EMFBoZgKsGSqbVSMblQR2zbM7L5r4ym0TGd2PuXPvv138gF3",
-	"sRPqtm6Lu4H4ot8J8i3+l+EMYdnXqgiSTSzH+3a4HqYSXobOtx46zSn80+fBZpsV3mVzpreGq6Jr3l91",
-	"r/fBbuv9mfldXakPlemGg2WCB7fxR3fs1pjgjCGpmCITIE7XPHfQXPbX5C/cuXuY5926h7jPtXd3mJM5",
-	"kULFSnT33jy+FOpmYPIlUezzfB3epQ/zlO0UucOG3PDyg/tx+558wvlA6PsYamt1fb7BtiOl33aodaRm",
-	"plq3LXOoAWGd8LP4vGV7w9acjBqgp63ODdD/bnnufvQ6yMZuWGy2XtP/QLfxRNtOeH96vbB90JelAdXG",
-	"b74ObWc7Gb0QfrCEL19qzTBWB/Y+T9IZ3EOtTfqhMVrREfW2piWdIZqyKGpdsXqmHZZvx2/HdHG9+DcA",
-	"AP//l9zsNZ4bAAA=",
+	"H4sIAAAAAAAC/+xZW2/bNhT+KwS3hw3wYvfyUOitTbYh2LAELYZgKIKAFo9jthLJkEfpjMD/fSBF3Sza",
+	"VpbaVYE8xZGO+B2e7zsXUQ80VblWEiRamjxQmy4hZ/7naWFR5WDcb22UBoMC/B3GuQHrf+JKA02oRSPk",
+	"LV1PKORMZO7OQpmcIU3ClUnfVPCOnZD46mVjJyTCLRhnKFkOUTC9VBI6i5RXemDrCTVwVwgDnCYfHXJY",
+	"dVK7Vz1Zbe66XkTNP0GKDq8KyZ/CooMVCLkPw48GFjShP0ybaE5DKKd1HNf1iswYtnL//2qMigQYqsv9",
+	"bfR8ujA8xlEaUG8GR3nDsCh8lPoxZ6scJN5YZFiU3soid1EtpGb+mfBnwUQGnF67h4ziRVpKbFDQLssH",
+	"YjHrA2uQ3Hk38WLOAMHBp0ymUDmACll2o41IIR7XnjzaAWxtoLvU9TZCKoV0Sam5GhSD0joSAS5sqgqJ",
+	"0Zzw7u3fY71GpaDYVioWehsZqJXtibuFiAm9K5hEgatBot2R1tv5CZt6VA7vkOMVzJdKfe7HSLmw3vzv",
+	"rNpNX71479HYloOP78FqJS08peC4S0IulDcWmLl7/wCSt1LhEgy5gjn5gMo4Du7BWKEkTeiLk9nJK+eJ",
+	"0iCZFjShr05mJzPvPi69D1OmxfT+xbRKPH/xFjxJHGxqhMZytd8BSSYsErUgjbVf3DBnc85Lq9PWTc0M",
+	"ywH9uh83V8zZvyIvciKLfA6msy5BRQxgYSR1O6cJvSvArCqlJTQTuXBpVGploG43HdgCbD8LvQVWLRYW",
+	"Hot77VRUisCH9+Vs5puFkghlPWFaZyL1UZx+ss63hxbCkD7nE8vrpLvFiz+cAF7PXn81xLJ7RqD+Ukh+",
+	"U4XkXsG2yHNmVjShjR5cyikb0dZbzgkjEr7URPxkf3ZU4BKIDcLuCu0t522huTQFi+8UXx0wtk0xQFPA",
+	"egS8zg7P6zvGyfsyvNuZXU/6pWT6IPi6JNuNB33az/z1mnMyX5Hzsx7TpVWF9W51zvcVlkKKuwKI4CBR",
+	"LAQYslDGa6mCqtLb1cEmu31l73I8vkwfaZYHLq2Qt1krzuvJ9m6yh/dWK3kmfZykOxYjjOsiwvjfmrP9",
+	"yV5aPfM+bt4Dlz3qW13Az8rDpsnSlOSMQ6wIXJQrPXqYDMseeZJsUL/2GNkDXYgMHWiJOF+R8DISx6xv",
+	"Npi99469COG1ZzfSxrvRLsRD5lBzJDDe4tlNgSEDsmUZ7J6MTw0whPJ84TCDcTgjOe5E3AId4SjsvSM5",
+	"k+wWnPgjtbAeh7cWRG+3fRryGE9riSqo4gn9MH6YcvhMHv8IpIKbUeKnzSFTPMW7PbUiKjYd+XB8qIrr",
+	"OJXwXHS+ddEJXfiXL62j0qjwLkNPrww3RRfuX9W3D8FutfqR+d08ox0r04GDLsGtzzt7Z+zKmOCSIUmZ",
+	"JHMgVmU81mgum+8uj5y5G5jjTt1t3GPN3TXmfEVyIX0k6g8pcfxcyJuWyVjeNtsfZ8bZZWtFDpiQAy9D",
+	"TpBbQj9EUevF9XiFbSCl37ao1aRGqtrQw+Ngv/PsOAA9bXQOQN/d8Fx/Rf0Ojo1188V3a0fbTXjTvZ7Z",
+	"HvXLUovqXcfFu9kujZ4JHy3h3Zda3fbVgrmPk3QG95ApXR40eis6oYXJaEKXiDqZTjOVsmypLCZvZm9m",
+	"dH29/i8AAP//VL3wrFMnAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

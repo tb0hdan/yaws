@@ -17,6 +17,31 @@ type WebStoreServer struct {
 	store  types.Store
 }
 
+func (w *WebStoreServer) GetCustomers(ctx echo.Context, params api.GetCustomersParams) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (w *WebStoreServer) AddCustomers(ctx echo.Context) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (w *WebStoreServer) DeleteCustomerById(ctx echo.Context, id int32) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (w *WebStoreServer) GetCustomerById(ctx echo.Context, id int32) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (w *WebStoreServer) UpdateCustomerById(ctx echo.Context, id int32) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (w *WebStoreServer) GetOrders(ctx echo.Context, params api.GetOrdersParams) error {
 	limit := int32(25)
 	if params.Limit != nil {
