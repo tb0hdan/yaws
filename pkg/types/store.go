@@ -7,6 +7,11 @@ import (
 )
 
 type Store interface {
+	GetCustomers(limit, offset int32) ([]models.Customer, error)
+	AddCustomers([]models.Customer) ([]models.Customer, error)
+	DeleteCustomerById(id int32) (models.Customer, error)
+	GetCustomerById(id int32) (models.Customer, error)
+	UpdateCustomerById(customer models.Customer, id int32) (models.Customer, error)
 	GetOrders(limit, offset int32, status, paymentStatus string) ([]models.Order, error)
 	CreateOrder(order models.Order) (models.Order, error)
 	GetOrderById(id uuid.UUID) (models.Order, error)

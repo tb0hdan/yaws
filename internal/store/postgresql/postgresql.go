@@ -13,6 +13,31 @@ type Store struct {
 	db         *gorm.DB
 }
 
+func (s *Store) GetCustomers(limit, offset int32) ([]models.Customer, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *Store) AddCustomers(customers []models.Customer) ([]models.Customer, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *Store) DeleteCustomerById(id int32) (models.Customer, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *Store) GetCustomerById(id int32) (models.Customer, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *Store) UpdateCustomerById(customer models.Customer, id int32) (models.Customer, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (s *Store) GetOrders(limit, offset int32, status, paymentStatus string) ([]models.Order, error) {
 	//TODO implement me
 	panic("implement me")

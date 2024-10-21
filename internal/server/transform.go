@@ -79,3 +79,32 @@ func FromAPIWebhookToModelsWebhook(webhook api.Webhook) models.Webhook {
 		PaymentStatus: webhook.PaymentStatus,
 	}
 }
+
+func FromModelsCustomerListToAPICustomerList(customers []models.Customer) api.CustomerList {
+	var customerList api.CustomerList
+	for _, customer := range customers {
+		customerList = append(customerList, FromModelsCustomerToAPICustomer(customer))
+	}
+	return customerList
+}
+
+func FromModelsCustomerToAPICustomer(customer models.Customer) api.Customer {
+	return api.Customer{
+		Id:   customer.Id,
+		Name: customer.Name,
+	}
+}
+
+func FromAPICustomerToModelsCustomer(customer api.Customer) models.Customer {
+	return models.Customer{
+		Name: customer.Name,
+	}
+}
+
+func FromAPICustomerListToModelsCustomerList(customers api.CustomerList) []models.Customer {
+	var customerList []models.Customer
+	for _, customer := range customers {
+		customerList = append(customerList, FromAPICustomerToModelsCustomer(customer))
+	}
+	return customerList
+}
