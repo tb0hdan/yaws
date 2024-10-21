@@ -186,12 +186,12 @@ type ClientInterface interface {
 	CreateOrder(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrderById request
-	GetOrderById(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetOrderById(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateOrderStatusWithBody request with any body
-	UpdateOrderStatusWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateOrderStatusWithBody(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateOrderStatus(ctx context.Context, id string, body UpdateOrderStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateOrderStatus(ctx context.Context, id openapi_types.UUID, body UpdateOrderStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PaymentWebhookWithBody request with any body
 	PaymentWebhookWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -252,7 +252,7 @@ func (c *Client) CreateOrder(ctx context.Context, body CreateOrderJSONRequestBod
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOrderById(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetOrderById(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrderByIdRequest(c.Server, id)
 	if err != nil {
 		return nil, err
@@ -264,7 +264,7 @@ func (c *Client) GetOrderById(ctx context.Context, id string, reqEditors ...Requ
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateOrderStatusWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateOrderStatusWithBody(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateOrderStatusRequestWithBody(c.Server, id, contentType, body)
 	if err != nil {
 		return nil, err
@@ -276,7 +276,7 @@ func (c *Client) UpdateOrderStatusWithBody(ctx context.Context, id string, conte
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateOrderStatus(ctx context.Context, id string, body UpdateOrderStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateOrderStatus(ctx context.Context, id openapi_types.UUID, body UpdateOrderStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateOrderStatusRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
@@ -522,7 +522,7 @@ func NewCreateOrderRequestWithBody(server string, contentType string, body io.Re
 }
 
 // NewGetOrderByIdRequest generates requests for GetOrderById
-func NewGetOrderByIdRequest(server string, id string) (*http.Request, error) {
+func NewGetOrderByIdRequest(server string, id openapi_types.UUID) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -556,7 +556,7 @@ func NewGetOrderByIdRequest(server string, id string) (*http.Request, error) {
 }
 
 // NewUpdateOrderStatusRequest calls the generic UpdateOrderStatus builder with application/json body
-func NewUpdateOrderStatusRequest(server string, id string, body UpdateOrderStatusJSONRequestBody) (*http.Request, error) {
+func NewUpdateOrderStatusRequest(server string, id openapi_types.UUID, body UpdateOrderStatusJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -567,7 +567,7 @@ func NewUpdateOrderStatusRequest(server string, id string, body UpdateOrderStatu
 }
 
 // NewUpdateOrderStatusRequestWithBody generates requests for UpdateOrderStatus with any type of body
-func NewUpdateOrderStatusRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateOrderStatusRequestWithBody(server string, id openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -917,12 +917,12 @@ type ClientWithResponsesInterface interface {
 	CreateOrderWithResponse(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error)
 
 	// GetOrderByIdWithResponse request
-	GetOrderByIdWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOrderByIdResponse, error)
+	GetOrderByIdWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetOrderByIdResponse, error)
 
 	// UpdateOrderStatusWithBodyWithResponse request with any body
-	UpdateOrderStatusWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateOrderStatusResponse, error)
+	UpdateOrderStatusWithBodyWithResponse(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateOrderStatusResponse, error)
 
-	UpdateOrderStatusWithResponse(ctx context.Context, id string, body UpdateOrderStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateOrderStatusResponse, error)
+	UpdateOrderStatusWithResponse(ctx context.Context, id openapi_types.UUID, body UpdateOrderStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateOrderStatusResponse, error)
 
 	// PaymentWebhookWithBodyWithResponse request with any body
 	PaymentWebhookWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PaymentWebhookResponse, error)
@@ -1204,7 +1204,7 @@ func (c *ClientWithResponses) CreateOrderWithResponse(ctx context.Context, body 
 }
 
 // GetOrderByIdWithResponse request returning *GetOrderByIdResponse
-func (c *ClientWithResponses) GetOrderByIdWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOrderByIdResponse, error) {
+func (c *ClientWithResponses) GetOrderByIdWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetOrderByIdResponse, error) {
 	rsp, err := c.GetOrderById(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -1213,7 +1213,7 @@ func (c *ClientWithResponses) GetOrderByIdWithResponse(ctx context.Context, id s
 }
 
 // UpdateOrderStatusWithBodyWithResponse request with arbitrary body returning *UpdateOrderStatusResponse
-func (c *ClientWithResponses) UpdateOrderStatusWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateOrderStatusResponse, error) {
+func (c *ClientWithResponses) UpdateOrderStatusWithBodyWithResponse(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateOrderStatusResponse, error) {
 	rsp, err := c.UpdateOrderStatusWithBody(ctx, id, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -1221,7 +1221,7 @@ func (c *ClientWithResponses) UpdateOrderStatusWithBodyWithResponse(ctx context.
 	return ParseUpdateOrderStatusResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpdateOrderStatusWithResponse(ctx context.Context, id string, body UpdateOrderStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateOrderStatusResponse, error) {
+func (c *ClientWithResponses) UpdateOrderStatusWithResponse(ctx context.Context, id openapi_types.UUID, body UpdateOrderStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateOrderStatusResponse, error) {
 	rsp, err := c.UpdateOrderStatus(ctx, id, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -1639,10 +1639,10 @@ type ServerInterface interface {
 	CreateOrder(ctx echo.Context) error
 	// Get single order
 	// (GET /api/v1/orders/{id})
-	GetOrderById(ctx echo.Context, id string) error
+	GetOrderById(ctx echo.Context, id openapi_types.UUID) error
 	// Order management
 	// (POST /api/v1/orders/{id}/status)
-	UpdateOrderStatus(ctx echo.Context, id string) error
+	UpdateOrderStatus(ctx echo.Context, id openapi_types.UUID) error
 	// Payment
 	// (POST /api/v1/payment-webhook)
 	PaymentWebhook(ctx echo.Context) error
@@ -1720,7 +1720,7 @@ func (w *ServerInterfaceWrapper) CreateOrder(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetOrderById(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
-	var id string
+	var id openapi_types.UUID
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -1736,7 +1736,7 @@ func (w *ServerInterfaceWrapper) GetOrderById(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) UpdateOrderStatus(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
-	var id string
+	var id openapi_types.UUID
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -1890,24 +1890,24 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

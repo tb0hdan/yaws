@@ -1,16 +1,21 @@
 package types
 
-import "github.com/labstack/echo/v4"
+import (
+	"yaws/internal/server/api"
+
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+)
 
 type Store interface {
-	GetOrders(ctx echo.Context) error
-	CreateOrder(ctx echo.Context) error
-	GetOrderById(ctx echo.Context, id string) error
-	UpdateOrderStatus(ctx echo.Context, id string) error
+	GetOrders(ctx echo.Context) (api.OrderList, error)
+	CreateOrder(ctx echo.Context) (api.Order, error)
+	GetOrderById(ctx echo.Context, id uuid.UUID) (*api.Order, error)
+	UpdateOrderStatus(ctx echo.Context, id uuid.UUID) error
 	PaymentWebhook(ctx echo.Context) error
-	GetProducts(ctx echo.Context) error
-	AddProducts(ctx echo.Context) error
-	DeleteProductById(ctx echo.Context, id string) error
-	GetProductById(ctx echo.Context, id string) error
-	UpdateProductById(ctx echo.Context, id string) error
+	GetProducts(ctx echo.Context, params api.GetProductsParams) (api.ProductList, error)
+	AddProducts(ctx echo.Context) (api.ProductList, error)
+	DeleteProductById(ctx echo.Context, id uuid.UUID) (api.Product, error)
+	GetProductById(ctx echo.Context, id uuid.UUID) (api.Product, error)
+	UpdateProductById(ctx echo.Context, id uuid.UUID) error
 }

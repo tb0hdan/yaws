@@ -233,6 +233,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
 
       responses:
         '200':
@@ -261,6 +262,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
 
       requestBody:
         required: true
