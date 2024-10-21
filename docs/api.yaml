@@ -1,7 +1,7 @@
 openapi: "3.0.0"
 info:
   title: Yet Another Web Store
-  version: 1.0.1
+  version: 1.0.2
 servers:
   - url: "http://localhost:8080"
     description: "Development server"
@@ -382,8 +382,14 @@ components:
     Webhook:
       type: object
       properties:
-        error:
+        order_id:
           type: string
+          format: uuid
+        payment_status:
+          type: string
+      required:
+        - order_id
+        - payment_status
     WebhookResponse:
       type: object
       properties:

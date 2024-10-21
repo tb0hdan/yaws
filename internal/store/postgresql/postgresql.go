@@ -1,68 +1,77 @@
 package postgresql
 
 import (
-	"yaws/internal/server/api"
+	"yaws/internal/store/postgresql/models"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 type Store struct {
 	Connection string
+	db         *gorm.DB
 }
 
-func (s Store) PaymentWebhook(ctx echo.Context) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (s Store) GetOrders(ctx echo.Context) (api.OrderList, error) {
+func (s *Store) GetOrders(limit, offset int32, status, paymentStatus string) ([]models.Order, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s Store) CreateOrder(ctx echo.Context) (api.Order, error) {
+func (s *Store) CreateOrder(order models.Order) (models.Order, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s Store) GetOrderById(ctx echo.Context, id uuid.UUID) (*api.Order, error) {
+func (s *Store) GetOrderById(id uuid.UUID) (models.Order, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s Store) UpdateOrderStatus(ctx echo.Context, id uuid.UUID) error {
+func (s *Store) UpdateOrderStatus(order models.Order, id uuid.UUID) (models.Order, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s Store) GetProducts(ctx echo.Context, params api.GetProductsParams) (api.ProductList, error) {
+func (s *Store) PaymentWebhook(webhook models.Webhook) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s Store) AddProducts(ctx echo.Context) (api.ProductList, error) {
+func (s *Store) GetProducts(limit, offset, minQuantity int32) ([]models.Product, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s Store) DeleteProductById(ctx echo.Context, id uuid.UUID) (api.Product, error) {
+func (s *Store) AddProducts(products []models.Product) ([]models.Product, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s Store) GetProductById(ctx echo.Context, id uuid.UUID) (api.Product, error) {
+func (s *Store) DeleteProductById(id uuid.UUID) (models.Product, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s Store) UpdateProductById(ctx echo.Context, id uuid.UUID) error {
+func (s *Store) GetProductById(id uuid.UUID) (models.Product, error) {
 	//TODO implement me
 	panic("implement me")
 }
-func (s Store) Connect() error {
+
+func (s *Store) UpdateProductById(product models.Product, id uuid.UUID) (models.Product, error) {
 	//TODO implement me
 	panic("implement me")
+}
+
+func (s *Store) Connect() error {
+	db, err := gorm.Open(postgres.Open(s.Connection), &gorm.Config{})
+	if err != nil {
+		return err
+	}
+	s.db = db
+	// Migrate the schema
+	db.AutoMigrate(&models.Product{})
+	return nil
 }
 
 func New() Store {

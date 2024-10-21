@@ -1,21 +1,20 @@
 package types
 
 import (
-	"yaws/internal/server/api"
+	"yaws/internal/store/postgresql/models"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 )
 
 type Store interface {
-	GetOrders(ctx echo.Context) (api.OrderList, error)
-	CreateOrder(ctx echo.Context) (api.Order, error)
-	GetOrderById(ctx echo.Context, id uuid.UUID) (*api.Order, error)
-	UpdateOrderStatus(ctx echo.Context, id uuid.UUID) error
-	PaymentWebhook(ctx echo.Context) error
-	GetProducts(ctx echo.Context, params api.GetProductsParams) (api.ProductList, error)
-	AddProducts(ctx echo.Context) (api.ProductList, error)
-	DeleteProductById(ctx echo.Context, id uuid.UUID) (api.Product, error)
-	GetProductById(ctx echo.Context, id uuid.UUID) (api.Product, error)
-	UpdateProductById(ctx echo.Context, id uuid.UUID) error
+	GetOrders(limit, offset int32, status, paymentStatus string) ([]models.Order, error)
+	CreateOrder(order models.Order) (models.Order, error)
+	GetOrderById(id uuid.UUID) (models.Order, error)
+	UpdateOrderStatus(order models.Order, id uuid.UUID) (models.Order, error)
+	PaymentWebhook(webhook models.Webhook) error
+	GetProducts(limit, offset, minQuantity int32) ([]models.Product, error)
+	AddProducts([]models.Product) ([]models.Product, error)
+	DeleteProductById(id uuid.UUID) (models.Product, error)
+	GetProductById(id uuid.UUID) (models.Product, error)
+	UpdateProductById(product models.Product, id uuid.UUID) (models.Product, error)
 }
