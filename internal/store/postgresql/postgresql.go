@@ -2,10 +2,21 @@ package postgresql
 
 import (
 	"yaws/internal/store/postgresql/models"
+	"yaws/pkg/utils"
+	"yaws/pkg/xerrors"
 
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+)
+
+const (
+	// StatusPending is the status of an order when it is created.
+	StatusPending           = "pending"
+	StatusCompleted         = "completed"
+	StatusCanceled          = "canceled"
+	InvalidOrderStatusError = xerrors.XError("invalid order status")
+	OrderNotPending         = xerrors.XError("order status is not pending")
 )
 
 type Store struct {
@@ -61,7 +72,10 @@ func (s *Store) GetOrders(limit, offset int32, status, paymentStatus string) ([]
 	var (
 		orders []models.Order
 	)
-	return orders, s.db.Limit(int(limit)).Offset(int(offset)).Where("status = ? AND payment_status = ?", status, paymentStatus).Find(&orders).Error
+
+	query1 := s.db.Limit(int(limit)).Offset(int(offset))
+	query2 := query1.Where("status = ? AND payment_status = ?", status, paymentStatus).Find(&orders)
+	return orders, query2.Error
 }
 
 func (s *Store) CreateOrder(order models.Order) (models.Order, error) {
@@ -83,6 +97,15 @@ func (s *Store) UpdateOrderStatus(order models.Order, id uuid.UUID) (models.Orde
 	if err.Error != nil {
 		return orderToUpdate, err.Error
 	}
+	if orderToUpdate.Status != StatusPending {
+		return orderToUpdate, OrderNotPending
+	}
+	if utils.Index([]string{StatusCompleted, StatusCanceled}, func(order string) bool {
+		return order == orderToUpdate.Status
+	}) == -1 {
+		return orderToUpdate, InvalidOrderStatusError
+	}
+
 	orderToUpdate.Status = order.Status
 	return orderToUpdate, s.db.Save(&orderToUpdate).Error
 }
@@ -91,7 +114,7 @@ func (s *Store) PaymentWebhook(webhook models.Webhook) error {
 	var (
 		order models.Order
 	)
-	err := s.db.First(&order, webhook.OrderId)
+	err := s.db.First(&order, webhook.OrderID)
 	if err.Error != nil {
 		return err.Error
 	}
@@ -143,21 +166,21 @@ func (s *Store) UpdateProductById(product models.Product, id uuid.UUID) (models.
 }
 
 func (s *Store) Connect() error {
-	db, err := gorm.Open(postgres.Open(s.Connection), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(s.Connection), &gorm.Config{}) // nolint:exhaustruct
 	if err != nil {
 		return err
 	}
 	s.db = db
 	// Migrate the schema
-	err = db.AutoMigrate(&models.Product{})
+	err = db.AutoMigrate(&models.Product{}) // nolint:exhaustruct
 	if err != nil {
 		return err
 	}
-	err = db.AutoMigrate(&models.Order{})
+	err = db.AutoMigrate(&models.Order{}) // nolint:exhaustruct
 	if err != nil {
 		return err
 	}
-	err = db.AutoMigrate(&models.Customer{})
+	err = db.AutoMigrate(&models.Customer{}) // nolint:exhaustruct
 	if err != nil {
 		return err
 	}
@@ -165,5 +188,5 @@ func (s *Store) Connect() error {
 }
 
 func New(connection string) *Store {
-	return &Store{Connection: connection}
+	return &Store{Connection: connection} // nolint:exhaustruct
 }

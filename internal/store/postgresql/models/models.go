@@ -28,7 +28,7 @@ type Product struct {
 type Order struct {
 	gorm.Model
 	ID            uuid.UUID `gorm:"primaryKey;type:uuid"`
-	CustomerId    int32
+	CustomerID    int32
 	PaymentStatus string
 	Products      []Product `gorm:"foreignKey:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Status        string
@@ -39,6 +39,6 @@ type Order struct {
 
 type Webhook struct {
 	// This is a placeholder for the webhook
-	OrderId       uuid.UUID
+	OrderID       uuid.UUID
 	PaymentStatus string
 }

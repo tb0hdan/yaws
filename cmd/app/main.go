@@ -15,6 +15,10 @@ import (
 	"github.com/rs/zerolog"
 )
 
+const (
+	DefaultDSN = "user=postgres password=postgres dbname=postgres sslmode=disable host=localhost port=5432"
+)
+
 func EnforceAPIJSON(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if strings.HasPrefix(c.Request().RequestURI, "/api/") &&
@@ -43,7 +47,7 @@ func main() {
 		return c.String(http.StatusOK, c.Response().Header().Get(echo.HeaderXRequestID))
 	})
 	//
-	storage := store.New(store.PostgreSQL, "user=postgres password=postgres dbname=postgres sslmode=disable host=localhost")
+	storage := store.New(store.PostgreSQL, DefaultDSN)
 	err := storage.Connect()
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to connect to storage")

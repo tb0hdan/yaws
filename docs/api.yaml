@@ -1,7 +1,7 @@
 openapi: "3.0.0"
 info:
   title: Yet Another Web Store
-  version: 1.0.3
+  version: 1.0.4
 servers:
   - url: "http://localhost:8080"
     description: "Development server"
@@ -527,6 +527,8 @@ components:
         - customer_id
         - products
         - total_price
+        - status
+        - payment_status
     OrderList:
       type: object
       properties:

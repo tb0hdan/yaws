@@ -17,6 +17,8 @@ linters:
     - ireturn
     - nlreturn
     - nolintlint
+    - revive
+    - stylecheck
     - varnamelen
     - wrapcheck
     - wsl

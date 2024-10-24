@@ -8,7 +8,7 @@ import (
 )
 
 func FromAPIProductToModelsProduct(product api.Product) models.Product {
-	return models.Product{
+	return models.Product{ // nolint:exhaustruct
 		Name:     product.Name,
 		Price:    product.Price,
 		Quantity: *product.Quantity,
@@ -16,7 +16,8 @@ func FromAPIProductToModelsProduct(product api.Product) models.Product {
 }
 
 func FromAPIProductListToModelsProductList(products api.ProductList) []models.Product {
-	var productList []models.Product
+	productList := make([]models.Product, 0, len(products))
+
 	for _, product := range products {
 		productList = append(productList, FromAPIProductToModelsProduct(product))
 	}
@@ -24,7 +25,7 @@ func FromAPIProductListToModelsProductList(products api.ProductList) []models.Pr
 }
 
 func FromModelsProductToAPIProduct(product models.Product) api.Product {
-	return api.Product{
+	return api.Product{ // nolint:exhaustruct
 		Name:     product.Name,
 		Price:    product.Price,
 		Quantity: &product.Quantity,
@@ -40,28 +41,20 @@ func FromModelsProductListToAPIProductList(products []models.Product) api.Produc
 }
 
 func FromAPIOrderToModelsOrder(order api.Order) models.Order {
-	return models.Order{
-		CustomerId:    order.CustomerId,
+	return models.Order{ // nolint:exhaustruct
+		CustomerID:    order.CustomerId,
 		PaymentStatus: fmt.Sprint(order.PaymentStatus),
 		Status:        fmt.Sprint(order.Status),
 		TotalPrice:    order.TotalPrice,
 	}
 }
 
-func FromAPIOrderListToModelsOrderList(orders api.OrderList) []models.Order {
-	var orderList []models.Order
-	for _, order := range orders.Order {
-		orderList = append(orderList, FromAPIOrderToModelsOrder(order))
-	}
-	return orderList
-}
-
 func FromModelsOrderToAPIOrder(order models.Order) api.Order {
-	return api.Order{
-		CustomerId: order.CustomerId,
-		// PaymentStatus: order.PaymentStatus,
-		// Status:        api.Status(order.Status),
-		TotalPrice: order.TotalPrice,
+	return api.Order{ // nolint:exhaustruct
+		CustomerId:    order.CustomerID,
+		PaymentStatus: order.PaymentStatus,
+		Status:        order.Status,
+		TotalPrice:    order.TotalPrice,
 	}
 }
 
@@ -75,7 +68,7 @@ func FromModelsOrderListToAPIOrderList(orders []models.Order) api.OrderList {
 
 func FromAPIWebhookToModelsWebhook(webhook api.Webhook) models.Webhook {
 	return models.Webhook{
-		OrderId:       webhook.OrderId,
+		OrderID:       webhook.OrderId,
 		PaymentStatus: webhook.PaymentStatus,
 	}
 }
@@ -89,20 +82,20 @@ func FromModelsCustomerListToAPICustomerList(customers []models.Customer) api.Cu
 }
 
 func FromModelsCustomerToAPICustomer(customer models.Customer) api.Customer {
-	return api.Customer{
+	return api.Customer{ // nolint:exhaustruct
 		Id:   customer.ID,
 		Name: customer.Name,
 	}
 }
 
 func FromAPICustomerToModelsCustomer(customer api.Customer) models.Customer {
-	return models.Customer{
+	return models.Customer{ // nolint:exhaustruct
 		Name: customer.Name,
 	}
 }
 
 func FromAPICustomerListToModelsCustomerList(customers api.CustomerList) []models.Customer {
-	var customerList []models.Customer
+	customerList := make([]models.Customer, 0, len(customers))
 	for _, customer := range customers {
 		customerList = append(customerList, FromAPICustomerToModelsCustomer(customer))
 	}

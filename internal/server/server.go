@@ -13,6 +13,15 @@ import (
 	"github.com/rs/zerolog"
 )
 
+const (
+	// DefaultLimit is the default limit for pagination.
+	DefaultLimit = int32(25)
+	// DefaultOffset is the default offset for pagination.
+	DefaultOffset = int32(0)
+	// DefaultMinQuantity is the default minimum quantity for products.
+	DefaultMinQuantity = int32(0)
+)
+
 type WebStoreServer struct {
 	// This is a placeholder for the server
 	logger zerolog.Logger
@@ -21,11 +30,11 @@ type WebStoreServer struct {
 }
 
 func (w *WebStoreServer) GetCustomers(ctx echo.Context, params api.GetCustomersParams) error {
-	limit := int32(25)
+	limit := DefaultLimit
 	if params.Limit != nil {
 		limit = *params.Limit
 	}
-	offset := int32(0)
+	offset := DefaultOffset
 	if params.Offset != nil {
 		offset = *params.Offset
 	}
@@ -86,11 +95,11 @@ func (w *WebStoreServer) UpdateCustomerById(ctx echo.Context, id int32) error {
 }
 
 func (w *WebStoreServer) GetOrders(ctx echo.Context, params api.GetOrdersParams) error {
-	limit := int32(25)
+	limit := DefaultLimit
 	if params.Limit != nil {
 		limit = *params.Limit
 	}
-	offset := int32(0)
+	offset := DefaultOffset
 	if params.Offset != nil {
 		offset = *params.Offset
 	}
@@ -183,7 +192,7 @@ func (w *WebStoreServer) PaymentWebhook(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, errors.Wrap(err, "Bad Request"))
 	}
 	// Primitive check for customer ID
-	if ctx.Request().Header.Get("X-Customer-ID") != "123" {
+	if ctx.Request().Header.Get("X-Customer-Id") != "123" {
 		return ctx.JSON(http.StatusUnauthorized, "Unauthorized")
 	}
 	//
@@ -195,7 +204,7 @@ func (w *WebStoreServer) PaymentWebhook(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
 	}
-	customer, err := w.store.GetCustomerById(order.CustomerId)
+	customer, err := w.store.GetCustomerById(order.CustomerID)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
 	}
@@ -211,15 +220,15 @@ func (w *WebStoreServer) PaymentWebhook(ctx echo.Context) error {
 }
 
 func (w *WebStoreServer) GetProducts(ctx echo.Context, params api.GetProductsParams) error {
-	limit := int32(25)
+	limit := DefaultLimit
 	if params.Limit != nil {
 		limit = *params.Limit
 	}
-	offset := int32(0)
+	offset := DefaultOffset
 	if params.Offset != nil {
 		offset = *params.Offset
 	}
-	minQuantity := int32(0)
+	minQuantity := DefaultMinQuantity
 	if params.MinQuantity != nil {
 		minQuantity = *params.MinQuantity
 	}
