@@ -13,7 +13,7 @@ func FromAPIProductToModelsProduct(product api.Product) models.Product {
 	)
 
 	if product.Description != nil {
-		description = fmt.Sprint(*product.Description)
+		description = *product.Description
 	}
 
 	return models.Product{ // nolint:exhaustruct
@@ -53,7 +53,7 @@ func FromModelsProductListToAPIProductList(products []models.Product) api.Produc
 }
 
 func FromAPILineItemToModelsProduct(lineItem api.LineItem) models.Product {
-	return models.Product{
+	return models.Product{ // nolint:exhaustruct
 		ID:       lineItem.ProductId,
 		Quantity: lineItem.Quantity,
 	}

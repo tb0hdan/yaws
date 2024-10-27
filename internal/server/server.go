@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 
 	"yaws/internal/server/api"
@@ -85,7 +84,6 @@ func (w *WebStoreServer) UpdateCustomerById(ctx echo.Context, id int32) error {
 		req api.Customer
 	)
 	if err := ctx.Bind(&req); err != nil {
-		fmt.Println(err)
 		return ctx.JSON(http.StatusBadRequest, errors.Wrap(err, "Bad Request"))
 	}
 
