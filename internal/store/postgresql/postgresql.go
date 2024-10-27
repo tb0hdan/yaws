@@ -1,6 +1,8 @@
 package postgresql
 
 import (
+	"time"
+
 	"yaws/internal/store/postgresql/models"
 	"yaws/pkg/utils"
 	"yaws/pkg/xerrors"
@@ -43,7 +45,7 @@ func (s *Store) DeleteCustomerById(id int32) (models.Customer, error) {
 	if err.Error != nil {
 		return customer, err.Error
 	}
-	return customer, s.db.Delete(&customer).Error
+	return customer, s.db.Unscoped().Delete(&customer).Error
 }
 
 func (s *Store) GetCustomerById(id int32) (models.Customer, error) {
@@ -65,6 +67,7 @@ func (s *Store) UpdateCustomerById(customer models.Customer, id int32) (models.C
 	customerToUpdate.Email = customer.Email
 	customerToUpdate.Phone = customer.Phone
 	customerToUpdate.Address = customer.Address
+	customerToUpdate.UpdatedAt = time.Now()
 	return customerToUpdate, s.db.Save(&customerToUpdate).Error
 }
 
@@ -107,6 +110,7 @@ func (s *Store) UpdateOrderStatus(order models.Order, id uuid.UUID) (models.Orde
 	}
 
 	orderToUpdate.Status = order.Status
+	orderToUpdate.UpdatedAt = time.Now()
 	return orderToUpdate, s.db.Save(&orderToUpdate).Error
 }
 
@@ -141,7 +145,7 @@ func (s *Store) DeleteProductById(id uuid.UUID) (models.Product, error) {
 	if err.Error != nil {
 		return product, err.Error
 	}
-	return product, s.db.Delete(&product).Error
+	return product, s.db.Unscoped().Delete(&product).Error
 }
 
 func (s *Store) GetProductById(id uuid.UUID) (models.Product, error) {
@@ -162,6 +166,7 @@ func (s *Store) UpdateProductById(product models.Product, id uuid.UUID) (models.
 	productToUpdate.Name = product.Name
 	productToUpdate.Price = product.Price
 	productToUpdate.Quantity = product.Quantity
+	productToUpdate.UpdatedAt = time.Now()
 	return productToUpdate, s.db.Save(&productToUpdate).Error
 }
 

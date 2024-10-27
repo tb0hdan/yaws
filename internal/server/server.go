@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 
 	"yaws/internal/server/api"
@@ -84,6 +85,7 @@ func (w *WebStoreServer) UpdateCustomerById(ctx echo.Context, id int32) error {
 		req api.Customer
 	)
 	if err := ctx.Bind(&req); err != nil {
+		fmt.Println(err)
 		return ctx.JSON(http.StatusBadRequest, errors.Wrap(err, "Bad Request"))
 	}
 
@@ -261,6 +263,9 @@ func (w *WebStoreServer) AddProducts(ctx echo.Context) error {
 func (w *WebStoreServer) DeleteProductById(ctx echo.Context, id uuid.UUID) error {
 	product, err := w.store.DeleteProductById(id)
 	if err != nil {
+		if err.Error() == "record not found" {
+			return ctx.JSON(http.StatusNotFound, errors.Wrap(err, "Not Found"))
+		}
 		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
 	}
 	return ctx.JSON(http.StatusOK, FromModelsProductToAPIProduct(product))

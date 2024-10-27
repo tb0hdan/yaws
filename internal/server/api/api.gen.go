@@ -24,11 +24,11 @@ import (
 
 // Customer defines model for Customer.
 type Customer struct {
-	Address string              `json:"address"`
-	Email   openapi_types.Email `json:"email"`
-	Id      int32               `json:"id"`
-	Name    string              `json:"name"`
-	Phone   string              `json:"phone"`
+	Address string `json:"address"`
+	Email   string `json:"email"`
+	Id      int32  `json:"id"`
+	Name    string `json:"name"`
+	Phone   string `json:"phone"`
 }
 
 // CustomerList defines model for CustomerList.
@@ -39,13 +39,19 @@ type Error struct {
 	Error *string `json:"error,omitempty"`
 }
 
+// LineItem defines model for LineItem.
+type LineItem struct {
+	ProductId openapi_types.UUID `json:"product_id"`
+	Quantity  int32              `json:"quantity"`
+}
+
 // Order defines model for Order.
 type Order struct {
 	CustomerId    int32              `json:"customer_id"`
 	Id            openapi_types.UUID `json:"id"`
-	PaymentStatus interface{}        `json:"payment_status"`
-	Products      []Product          `json:"products"`
-	Status        interface{}        `json:"status"`
+	PaymentStatus *interface{}       `json:"payment_status,omitempty"`
+	Products      []LineItem         `json:"products"`
+	Status        *interface{}       `json:"status,omitempty"`
 	TotalPrice    string             `json:"total_price"`
 }
 
@@ -58,10 +64,11 @@ type OrderList struct {
 
 // Product defines model for Product.
 type Product struct {
-	Id       openapi_types.UUID `json:"id"`
-	Name     string             `json:"name"`
-	Price    string             `json:"price"`
-	Quantity *int32             `json:"quantity,omitempty"`
+	Description *string            `json:"description,omitempty"`
+	Id          openapi_types.UUID `json:"id"`
+	Name        string             `json:"name"`
+	Price       string             `json:"price"`
+	Quantity    int32              `json:"quantity"`
 }
 
 // ProductList defines model for ProductList.
@@ -116,6 +123,9 @@ type GetProductsParams struct {
 
 // AddCustomersJSONRequestBody defines body for AddCustomers for application/json ContentType.
 type AddCustomersJSONRequestBody = CustomerList
+
+// UpdateCustomerByIdJSONRequestBody defines body for UpdateCustomerById for application/json ContentType.
+type UpdateCustomerByIdJSONRequestBody = Customer
 
 // CreateOrderJSONRequestBody defines body for CreateOrder for application/json ContentType.
 type CreateOrderJSONRequestBody = Order
@@ -216,8 +226,10 @@ type ClientInterface interface {
 	// GetCustomerById request
 	GetCustomerById(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UpdateCustomerById request
-	UpdateCustomerById(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// UpdateCustomerByIdWithBody request with any body
+	UpdateCustomerByIdWithBody(ctx context.Context, id int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateCustomerById(ctx context.Context, id int32, body UpdateCustomerByIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrders request
 	GetOrders(ctx context.Context, params *GetOrdersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -318,8 +330,20 @@ func (c *Client) GetCustomerById(ctx context.Context, id int32, reqEditors ...Re
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateCustomerById(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateCustomerByIdRequest(c.Server, id)
+func (c *Client) UpdateCustomerByIdWithBody(ctx context.Context, id int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomerByIdRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateCustomerById(ctx context.Context, id int32, body UpdateCustomerByIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomerByIdRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -671,8 +695,19 @@ func NewGetCustomerByIdRequest(server string, id int32) (*http.Request, error) {
 	return req, nil
 }
 
-// NewUpdateCustomerByIdRequest generates requests for UpdateCustomerById
-func NewUpdateCustomerByIdRequest(server string, id int32) (*http.Request, error) {
+// NewUpdateCustomerByIdRequest calls the generic UpdateCustomerById builder with application/json body
+func NewUpdateCustomerByIdRequest(server string, id int32, body UpdateCustomerByIdJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateCustomerByIdRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdateCustomerByIdRequestWithBody generates requests for UpdateCustomerById with any type of body
+func NewUpdateCustomerByIdRequestWithBody(server string, id int32, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -697,10 +732,12 @@ func NewUpdateCustomerByIdRequest(server string, id int32) (*http.Request, error
 		return nil, err
 	}
 
-	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -1243,8 +1280,10 @@ type ClientWithResponsesInterface interface {
 	// GetCustomerByIdWithResponse request
 	GetCustomerByIdWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*GetCustomerByIdResponse, error)
 
-	// UpdateCustomerByIdWithResponse request
-	UpdateCustomerByIdWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*UpdateCustomerByIdResponse, error)
+	// UpdateCustomerByIdWithBodyWithResponse request with any body
+	UpdateCustomerByIdWithBodyWithResponse(ctx context.Context, id int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomerByIdResponse, error)
+
+	UpdateCustomerByIdWithResponse(ctx context.Context, id int32, body UpdateCustomerByIdJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerByIdResponse, error)
 
 	// GetOrdersWithResponse request
 	GetOrdersWithResponse(ctx context.Context, params *GetOrdersParams, reqEditors ...RequestEditorFn) (*GetOrdersResponse, error)
@@ -1674,9 +1713,17 @@ func (c *ClientWithResponses) GetCustomerByIdWithResponse(ctx context.Context, i
 	return ParseGetCustomerByIdResponse(rsp)
 }
 
-// UpdateCustomerByIdWithResponse request returning *UpdateCustomerByIdResponse
-func (c *ClientWithResponses) UpdateCustomerByIdWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*UpdateCustomerByIdResponse, error) {
-	rsp, err := c.UpdateCustomerById(ctx, id, reqEditors...)
+// UpdateCustomerByIdWithBodyWithResponse request with arbitrary body returning *UpdateCustomerByIdResponse
+func (c *ClientWithResponses) UpdateCustomerByIdWithBodyWithResponse(ctx context.Context, id int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomerByIdResponse, error) {
+	rsp, err := c.UpdateCustomerByIdWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCustomerByIdResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateCustomerByIdWithResponse(ctx context.Context, id int32, body UpdateCustomerByIdJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerByIdResponse, error) {
+	rsp, err := c.UpdateCustomerById(ctx, id, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2663,28 +2710,28 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/+xZW2/bNhT+KwS3hw3wYvfyUOitTbYh2LAELYZgKIKAFo9jthLJkEfpjMD/fSBF3Sza",
-	"VpbaVYE8xZGO+B2e7zsXUQ80VblWEiRamjxQmy4hZ/7naWFR5WDcb22UBoMC/B3GuQHrf+JKA02oRSPk",
-	"LV1PKORMZO7OQpmcIU3ClUnfVPCOnZD46mVjJyTCLRhnKFkOUTC9VBI6i5RXemDrCTVwVwgDnCYfHXJY",
-	"dVK7Vz1Zbe66XkTNP0GKDq8KyZ/CooMVCLkPw48GFjShP0ybaE5DKKd1HNf1iswYtnL//2qMigQYqsv9",
-	"bfR8ujA8xlEaUG8GR3nDsCh8lPoxZ6scJN5YZFiU3soid1EtpGb+mfBnwUQGnF67h4ziRVpKbFDQLssH",
-	"YjHrA2uQ3Hk38WLOAMHBp0ymUDmACll2o41IIR7XnjzaAWxtoLtU7U0vLtfbqKq006WrZnFQdErrSGy4",
-	"sKkqJEazxTu+f/f1GpW2Ylup+OltZKCKtqf0Foom9K5gEgWuBsl5R8KXCDs29ajs3iHUK5gvlfrcj5Fy",
-	"Yb353/m2m7568UGSDD6+B6uVtPCUUuQuCblQ3lhg5u79A0jeSoVLMOQK5uQDKuM4uAdjhZI0oS9OZiev",
-	"nSdKg2Ra0IS+OpmdzLz7uPQ+TJkW0/sX0yol/cVb8CRxsKkRGsvVfgckmbBI1II01n5xw5zNOS+tTls3",
-	"NTMsB/TrftxcMWf/irzIiSzyOZjOugQVMYCFkdTtnCb0rgCzqpSW0EzkwqVRqZWBut10YAuw/Sz0Fli1",
-	"WFh4LO61U1EpAh/el7OZbyNKIpT1hGmdidRHcfrJOt8eWghDOqBPLK+T7hYv/nACeD17/dUQy74agfpL",
-	"IflNFZJ7Bdsiz5lZ0YQ2enApp2xEW285J4xI+FIT8ZP92VGBSyA2CLsrtLect4Xm0hQsvlN8dcDYNsUA",
-	"TQHrEfA6Ozyv7xgn78vwbmd2PemXkumD4OuSbDc49Gk/89drzsl8Rc7PekyXVhXWu9U531dYCinuCiCC",
-	"g0SxEGDIQhmvpQqqSm9XB5vs9pW9y/H4Mn2kWR64tELeZq04ryfbu8ke3lut5Jn0cZLuWIwwrosI439r",
-	"zvYne2n1zPu4eQ9c9qhvdQE/Kw+bJktTkjMOsSJwUa706GEyLHvkSbJB/dpjZA90ITJ0oCXifEXqF+YY",
-	"Zn2zwey9d+xFCK89u5E23o12IR4yh5ojgfEWz24KDBmQLctg92R8aoAhlOcLhxmMwxnJcSfiFugIR2Hv",
-	"HcmZZLfgxB+phfU4vLUgervt05DHeFpLVEEVT+iH8cOUw2fy+EcgFdyMEj9tDpniKd7tqRVRsenIh+ND",
-	"czg6RiU8F51vXXRCF/7lS+uoNCq8y9DTK8NN0YX7V/XtQ7BbrX5kfjfPaMfKdOCgS3Drw8/eGbsyJrhk",
-	"SFImyRyIVRmPNZrL5ovMI2fuBua4U3cb91hzd405X5FcSB+J+kNKHD8X8qZlMpa3zfbHmXF22VqRAybk",
-	"wMuQE+SW0A9R1HpxPV5hG0jpty1qNamRqjb08DjY7zw7DkBPG50D0Hc3PNdfUb+DY2PdfPHd2tF2E950",
-	"r2e2R/2y1KJ613HxbrZLo2fCR0t496VWt321YO7jJJ3BPWRKlweN3opOaGEymtAlok6m00ylLFsqi8mb",
-	"2ZsZXV+v/wsAAP//RXNKNm0nAAA=",
+	"H4sIAAAAAAAC/+xZbW/bNhD+KwS3Dxvgxe7LgELf2mYbghVL0GIIhiIwaPEcs5VIhjylMwL/94EU9WKL",
+	"tpWldhQgn+JIp3vIe557EXVHU5VrJUGipckdtekCcuZ/vi8sqhyM+62N0mBQgL/DODdg/U9caqAJtWiE",
+	"vKarEYWciSx6R3B3ea5MzpAmVEh89ZKOKjshEa7BOEPJcoh60AslYc1JeWW0aboaUQM3hTDAafLZIQev",
+	"1fpG9ZPVXq5qJ2r2BVJ0eFUEPgiLDlYg5H7XPxqY04T+MG6CNw6RG9dhW9UemTFs6f7/zRgViSdUl7vb",
+	"6Kzpg5BwhpB3vWijeJHidCPOReG33wnmTcEkClz2ImUjoC2olqNYCM8NjykoDUGa9hZFz11ptsxB4tQi",
+	"w6IMrixyt+ZCauafCX/mTGTA6ZV7qNyO7c1xTUKE4y6yBsnd8kY+1zJAcPgpkylUK0CFLJtqI1KI66Aj",
+	"53YEWztYd7WVkUrR66zUZPUKQmkdiQAXNlWFxGgO++Xt32Pto5JQbCsX5a67G+FgUyM0CiX7lKJtYtpe",
+	"iLYQ9bCsapepEmFPcoX936s8VTGL8HYJs4VSX7vhVI6B6f/OwN1M1847j8a2HNb4EaxW0sJDaqm7JORc",
+	"eWOBmbv3DyB5KxUuwJBLmJFPqIyj4RaM9WKiL04mJ7+6lSgNkmlBE/rqZHIy8cvHhV/DmGkxvn0xrnLU",
+	"X7wG7EiT/gFIMmGRqDlprL1zw5zNGS+t3rduamZYDuj9ft70mLN/RV7kRBb5DMyaX4KKGMDCSOp2ThN6",
+	"U4BZVqJLaCZy4TKu1EpPCW8uYAuw/Sr0Flg1n1u4L+6VU1EpAh/el5OJbyxKIpSlh2mdidRHcfzFlpWg",
+	"QejTwn1ieZ2sb/H8TyeA15PX3w2xHAwiUH8pJL+rQnKvYFvkOTNLmtBGDy7llI1o6y3nhBEJ32oifrI/",
+	"OypwAcQGYa8L7S3nbaG5NAWL7xRfHjC2TTFAU8BqALxODs/rO8bJxzK825ldjbqlZHwn+Kok200SXdpP",
+	"/fWaczJbkrPTDtOlVYX1bnnG9xWWQoqbAojgIFHMBRgyV8ZrqYKq0tvVwSa7fWVf53h4mT7QLA9cWiGv",
+	"s1acV6Pt3WQP761W8kz6MEl3LEYY10WE8b81Z/uTvbR6Orwfrus8VscZqNSCfDpqazUeP573G2BLU5Iz",
+	"DrG6c156uvf8GtweeXhtUL/35NoBnYsMHWiJOFuS8P4Tx6xvNpidV529COFNazfSxuvYLsRDluvmwGK4",
+	"9Xo9BfrM5JZlsHsYf2+AIZSnH4epiuEE57glsQU6wOnbr47kTLJrcOKP1MJ6At9aEL3d9gHMYzysC6ug",
+	"ige04Pj5zeEzefhTlwrLjBI/bs614im+3lMromIDmQ/Hp6q4DlMJz0XnsYtO6MK/fGudzkaFdxF6emW4",
+	"Kbpw/7K+fQh2K+9H5nfzWHioTAcO1glufX3aO2NXxgQXDEnKJJkBsSrjsUZz0XwVuufM3cAcd+pu4x5r",
+	"7q4xZ0uSC+kjUX92iePnQk5bJkM52Gh/Dxpml60V2WNCDrz0ObRuCf0QRa0T1+MVtp6UPm5Rq0mNVLW+",
+	"59XBfudxdQB62OgcgJ7c8Fx/uH0CJ9W6+ci8taPtJrzpXs9sD/plqUX1rhPq3WyXRs+ED5bw9Zda3V6r",
+	"BXMbJ+kUbiFTujxo9FZ0RAuT0YQuEHUyHmcqZdlCWUzeTN5M6Opq9V8AAAD//wyX4tiQKAAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

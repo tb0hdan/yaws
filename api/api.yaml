@@ -1,7 +1,7 @@
 openapi: "3.0.0"
 info:
   title: Yet Another Web Store
-  version: 1.0.5
+  version: 1.0.6
 servers:
   - url: "http://localhost:8080"
     description: "Development server"
@@ -101,7 +101,12 @@ paths:
           schema:
             type: integer
             format: int32
-
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Customer"
       responses:
         '200':
           description: "OK"
@@ -464,7 +469,8 @@ components:
             type: string
           email:
             type: string
-            format: email
+            # Unusable due to the lack of a proper regex
+            # format: email
           phone:
             type: string
             format: phone
@@ -488,6 +494,8 @@ components:
           format: uuid
         name:
           type: string
+        description:
+          type: string
         price:
           type: string
         quantity:
@@ -497,6 +505,19 @@ components:
         - id
         - name
         - price
+        - quantity
+    LineItem:
+        type: object
+        properties:
+          product_id:
+            type: string
+            format: uuid
+          quantity:
+            type: integer
+            format: int32
+        required:
+            - product_id
+            - quantity
     Order:
       type: object
       properties:
@@ -509,7 +530,7 @@ components:
         products:
           type: array
           items:
-            $ref: "#/components/schemas/Product"
+            $ref: "#/components/schemas/LineItem"
         total_price:
           type: string
         status:
@@ -527,8 +548,6 @@ components:
         - customer_id
         - products
         - total_price
-        - status
-        - payment_status
     OrderList:
       type: object
       properties:
