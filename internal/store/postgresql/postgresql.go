@@ -8,8 +8,10 @@ import (
 	"yaws/pkg/xerrors"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 const (
@@ -82,6 +84,40 @@ func (s *Store) GetOrders(limit, offset int32, status, paymentStatus string) ([]
 }
 
 func (s *Store) CreateOrder(order models.Order) (models.Order, error) {
+	var (
+		emptyOrder models.Order
+	)
+	totalPrice := decimal.NewFromInt(0)
+	// check availability and update stock
+	for _, item := range order.Products {
+		var (
+			product models.Product
+		)
+		dbErr := s.db.First(&product, item.ID)
+		if dbErr.Error != nil {
+			return emptyOrder, dbErr.Error
+		}
+		if product.Quantity < item.Quantity {
+			return emptyOrder, xerrors.XError("insufficient stock for product " + product.Name)
+		}
+		productPrice, err := decimal.NewFromString(product.Price)
+		if err != nil {
+			return emptyOrder, err
+		}
+		// Calculate the total price
+		itemsPrice := productPrice.Mul(decimal.NewFromInt(int64(item.Quantity)))
+		totalPrice = totalPrice.Add(itemsPrice)
+		//
+		product.Quantity -= item.Quantity
+		product.UpdatedAt = time.Now()
+
+		dbErr = s.db.Save(&product)
+		if dbErr.Error != nil {
+			return order, dbErr.Error
+		}
+	}
+	order.TotalPrice = totalPrice.String()
+	// Return the order
 	return order, s.db.Create(&order).Error
 }
 
@@ -171,7 +207,9 @@ func (s *Store) UpdateProductById(product models.Product, id uuid.UUID) (models.
 }
 
 func (s *Store) Connect() error {
-	db, err := gorm.Open(postgres.Open(s.Connection), &gorm.Config{}) // nolint:exhaustruct
+	db, err := gorm.Open(postgres.Open(s.Connection), &gorm.Config{ // nolint:exhaustruct
+		Logger: logger.Default.LogMode(logger.Info),
+	})
 	if err != nil {
 		return err
 	}

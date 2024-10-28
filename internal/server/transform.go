@@ -54,7 +54,7 @@ func FromModelsProductListToAPIProductList(products []models.Product) api.Produc
 
 func FromAPILineItemToModelsProduct(lineItem api.LineItem) models.Product {
 	return models.Product{ // nolint:exhaustruct
-		ID:       lineItem.ProductId,
+		ID:       lineItem.Id,
 		Quantity: lineItem.Quantity,
 	}
 }
@@ -83,6 +83,7 @@ func FromAPIOrderToModelsOrder(order api.Order) models.Order {
 	}
 
 	return models.Order{ // nolint:exhaustruct
+		ID:            order.Id,
 		CustomerID:    order.CustomerId,
 		PaymentStatus: paymentStatus,
 		Status:        orderStatus,
@@ -106,6 +107,7 @@ func FromModelsOrderToAPIOrder(order models.Order) api.Order {
 	}
 
 	return api.Order{ // nolint:exhaustruct
+		Id:            order.ID,
 		CustomerId:    order.CustomerID,
 		PaymentStatus: &paymentStatus,
 		Status:        &orderStatus,

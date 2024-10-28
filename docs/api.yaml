@@ -1,7 +1,7 @@
 openapi: "3.0.0"
 info:
   title: Yet Another Web Store
-  version: 1.0.5
+  version: 1.0.6
 servers:
   - url: "http://localhost:8080"
     description: "Development server"
@@ -509,14 +509,14 @@ components:
     LineItem:
         type: object
         properties:
-          product_id:
+          id:
             type: string
             format: uuid
           quantity:
             type: integer
             format: int32
         required:
-            - product_id
+            - id
             - quantity
     Order:
       type: object

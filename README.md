@@ -15,6 +15,10 @@ This will start the database and the application. The application will be availa
 make run
 ```
 
+## API Documentation
+
+The API documentation is available at `http://localhost:8080/docs/`.
+
 
 ## Assumptions / Limitations
 

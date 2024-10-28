@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -120,7 +121,8 @@ func (w *WebStoreServer) GetOrders(ctx echo.Context, params api.GetOrdersParams)
 
 func (w *WebStoreServer) CreateOrder(ctx echo.Context) error {
 	var (
-		req api.Order
+		req     api.Order
+		lineMap = make(map[uuid.UUID]api.LineItem)
 	)
 	if err := ctx.Bind(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, errors.Wrap(err, "Bad Request"))
@@ -128,7 +130,14 @@ func (w *WebStoreServer) CreateOrder(ctx echo.Context) error {
 	if req.CustomerId == 0 {
 		return ctx.JSON(http.StatusBadRequest, "Customer ID is required")
 	}
-
+	// Check for line item duplicates
+	for _, line := range req.Products {
+		if _, ok := lineMap[line.Id]; ok {
+			return ctx.JSON(http.StatusBadRequest, "Duplicate line items")
+		}
+		lineMap[line.Id] = line
+	}
+	// Create order
 	order, err := w.store.CreateOrder(FromAPIOrderToModelsOrder(req))
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
@@ -242,7 +251,8 @@ func (w *WebStoreServer) GetProducts(ctx echo.Context, params api.GetProductsPar
 
 func (w *WebStoreServer) AddProducts(ctx echo.Context) error {
 	var (
-		req api.ProductList
+		req        api.ProductList
+		productMap = make(map[uuid.UUID]api.Product)
 	)
 	if err := ctx.Bind(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, errors.Wrap(err, "Bad Request"))
@@ -250,7 +260,24 @@ func (w *WebStoreServer) AddProducts(ctx echo.Context) error {
 	if len(req) == 0 {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-
+	// Validate product list
+	for _, product := range req {
+		if product.Quantity <= 0 {
+			return ctx.JSON(http.StatusBadRequest, "Quantity must be greater than 0")
+		}
+		price, err := decimal.NewFromString(product.Price)
+		if err != nil {
+			return ctx.JSON(http.StatusBadRequest, "Invalid price")
+		}
+		if price.LessThanOrEqual(decimal.NewFromInt(0)) {
+			return ctx.JSON(http.StatusBadRequest, "Price must be greater than 0")
+		}
+		if _, ok := productMap[product.Id]; ok {
+			return ctx.JSON(http.StatusBadRequest, "Duplicate products")
+		}
+		productMap[product.Id] = product
+	}
+	//
 	products, err := w.store.AddProducts(FromAPIProductListToModelsProductList(req))
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
