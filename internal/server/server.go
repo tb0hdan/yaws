@@ -169,17 +169,17 @@ func (w *WebStoreServer) GetOrderById(ctx echo.Context, id uuid.UUID) error {
 
 func (w *WebStoreServer) UpdateOrderStatus(ctx echo.Context, id uuid.UUID) error {
 	var (
-		req api.Order
+		req api.OrderStatus
 	)
 	if err := ctx.Bind(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, errors.Wrap(err, "Bad Request"))
 	}
 
-	order, err := w.store.UpdateOrderStatus(FromAPIOrderToModelsOrder(req), id)
+	order, err := w.store.UpdateOrderStatus(FromAPIOrderStatusToModelsOrderStatus(req, id))
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
 	}
-	customer, err := w.store.GetCustomerById(req.CustomerId)
+	customer, err := w.store.GetCustomerById(order.CustomerID)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
 	}

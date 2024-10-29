@@ -19,7 +19,10 @@ const (
 	StatusPending           = "pending"
 	StatusCompleted         = "completed"
 	StatusCanceled          = "canceled"
+	StatusPaid              = "paid"
+	StatusFailed            = "failed"
 	InvalidOrderStatusError = xerrors.XError("invalid order status")
+	InvalidPaymentStatus    = xerrors.XError("invalid payment status")
 	OrderNotPending         = xerrors.XError("order status is not pending")
 )
 
@@ -78,8 +81,21 @@ func (s *Store) GetOrders(limit, offset int32, status, paymentStatus string) ([]
 		orders []models.Order
 	)
 
+	rawQuery := ""
+	if status != "" && paymentStatus == "" {
+		rawQuery = "status = ?"
+	}
+	if status == "" && paymentStatus != "" {
+		rawQuery = "payment_status = ?"
+	}
+	if status != "" && paymentStatus != "" {
+		rawQuery = "status = ? AND payment_status = ?"
+	}
 	query1 := s.db.Limit(int(limit)).Offset(int(offset))
-	query2 := query1.Where("status = ? AND payment_status = ?", status, paymentStatus).Find(&orders)
+	if rawQuery == "" {
+		return orders, query1.Find(&orders).Error
+	}
+	query2 := query1.Where(rawQuery, status, paymentStatus).Find(&orders)
 	return orders, query2.Error
 }
 
@@ -128,11 +144,11 @@ func (s *Store) GetOrderById(id uuid.UUID) (models.Order, error) {
 	return order, s.db.First(&order, id).Error
 }
 
-func (s *Store) UpdateOrderStatus(order models.Order, id uuid.UUID) (models.Order, error) {
+func (s *Store) UpdateOrderStatus(orderStatus models.OrderStatus) (models.Order, error) {
 	var (
 		orderToUpdate models.Order
 	)
-	err := s.db.First(&orderToUpdate, id)
+	err := s.db.First(&orderToUpdate, orderStatus.OrderID)
 	if err.Error != nil {
 		return orderToUpdate, err.Error
 	}
@@ -140,12 +156,12 @@ func (s *Store) UpdateOrderStatus(order models.Order, id uuid.UUID) (models.Orde
 		return orderToUpdate, OrderNotPending
 	}
 	if utils.Index([]string{StatusCompleted, StatusCanceled}, func(order string) bool {
-		return order == orderToUpdate.Status
+		return order == orderStatus.Status
 	}) == -1 {
 		return orderToUpdate, InvalidOrderStatusError
 	}
 
-	orderToUpdate.Status = order.Status
+	orderToUpdate.Status = orderStatus.Status
 	orderToUpdate.UpdatedAt = time.Now()
 	return orderToUpdate, s.db.Save(&orderToUpdate).Error
 }
@@ -158,6 +174,15 @@ func (s *Store) PaymentWebhook(webhook models.Webhook) error {
 	if err.Error != nil {
 		return err.Error
 	}
+	if order.Status != StatusPending {
+		return OrderNotPending
+	}
+	if utils.Index([]string{StatusPaid, StatusFailed}, func(status string) bool {
+		return status == webhook.PaymentStatus
+	}) == -1 {
+		return InvalidPaymentStatus
+	}
+
 	order.PaymentStatus = webhook.PaymentStatus
 	return s.db.Save(&order).Error
 }

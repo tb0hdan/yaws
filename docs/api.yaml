@@ -1,7 +1,7 @@
 openapi: "3.0.0"
 info:
   title: Yet Another Web Store
-  version: 1.0.6
+  version: 1.0.7
 servers:
   - url: "http://localhost:8080"
     description: "Development server"
@@ -410,7 +410,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Order"
+              $ref: "#/components/schemas/OrderStatus"
 
       responses:
         '200':
@@ -562,6 +562,16 @@ components:
       required:
         - discount
         - Order
+    OrderStatus:
+        type: object
+        properties:
+          status:
+            enum:
+              - "pending"
+              - "completed"
+              - "canceled"
+        required:
+            - status
     Webhook:
       type: object
       properties:

@@ -5,6 +5,8 @@ import (
 
 	"yaws/internal/server/api"
 	"yaws/internal/store/postgresql/models"
+
+	"github.com/google/uuid"
 )
 
 func FromAPIProductToModelsProduct(product api.Product) models.Product {
@@ -121,6 +123,13 @@ func FromModelsOrderListToAPIOrderList(orders []models.Order) api.OrderList {
 		orderList.Order = append(orderList.Order, FromModelsOrderToAPIOrder(order))
 	}
 	return orderList
+}
+
+func FromAPIOrderStatusToModelsOrderStatus(orderStatus api.OrderStatus, id uuid.UUID) models.OrderStatus {
+	return models.OrderStatus{
+		OrderID: id,
+		Status:  fmt.Sprint(orderStatus.Status),
+	}
 }
 
 func FromAPIWebhookToModelsWebhook(webhook api.Webhook) models.Webhook {

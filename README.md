@@ -26,3 +26,9 @@ The API documentation is available at `http://localhost:8080/docs/`.
 - Customers are stored in the local database
 - GORM associations are not used
 - The application is not production-ready
+
+## TODOs
+
+- Order -> Product association
+- JSON errors
+- Tests

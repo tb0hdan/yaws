@@ -42,6 +42,12 @@ type Order struct {
 	UpdatedAt     time.Time
 }
 
+type OrderStatus struct {
+	// This is a placeholder for the order status
+	OrderID uuid.UUID
+	Status  string
+}
+
 type Webhook struct {
 	// This is a placeholder for the webhook
 	OrderID       uuid.UUID
