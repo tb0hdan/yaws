@@ -6,6 +6,7 @@ import (
 	"yaws/internal/server/api"
 	"yaws/internal/transactional"
 	"yaws/pkg/types"
+	"yaws/pkg/utils"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -41,7 +42,7 @@ func (w *WebStoreServer) GetCustomers(ctx echo.Context, params api.GetCustomersP
 	}
 	customers, err := w.store.GetCustomers(limit, offset)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError, utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	return ctx.JSON(http.StatusOK, FromModelsCustomerListToAPICustomerList(customers))
 }
@@ -51,15 +52,15 @@ func (w *WebStoreServer) AddCustomers(ctx echo.Context) error {
 		req api.CustomerList
 	)
 	if err := ctx.Bind(&req); err != nil {
-		return ctx.JSON(http.StatusBadRequest, errors.Wrap(err, "Bad Request"))
+		return ctx.JSON(http.StatusBadRequest, utils.ToAPIError(errors.Wrap(err, "Bad Request")))
 	}
 	if len(req) == 0 {
-		return ctx.JSON(http.StatusBadRequest, "No customers to add")
+		return ctx.JSON(http.StatusBadRequest, utils.ToAPIError("No customers to add"))
 	}
 
 	customers, err := w.store.AddCustomers(FromAPICustomerListToModelsCustomerList(req))
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError, utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	return ctx.JSON(http.StatusOK, FromModelsCustomerListToAPICustomerList(customers))
 }
@@ -67,7 +68,7 @@ func (w *WebStoreServer) AddCustomers(ctx echo.Context) error {
 func (w *WebStoreServer) DeleteCustomerById(ctx echo.Context, id int32) error {
 	customer, err := w.store.DeleteCustomerById(id)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError, utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	return ctx.JSON(http.StatusOK, FromModelsCustomerToAPICustomer(customer))
 }
@@ -75,7 +76,7 @@ func (w *WebStoreServer) DeleteCustomerById(ctx echo.Context, id int32) error {
 func (w *WebStoreServer) GetCustomerById(ctx echo.Context, id int32) error {
 	customer, err := w.store.GetCustomerById(id)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError, utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	return ctx.JSON(http.StatusOK, FromModelsCustomerToAPICustomer(customer))
 }
@@ -85,12 +86,12 @@ func (w *WebStoreServer) UpdateCustomerById(ctx echo.Context, id int32) error {
 		req api.Customer
 	)
 	if err := ctx.Bind(&req); err != nil {
-		return ctx.JSON(http.StatusBadRequest, errors.Wrap(err, "Bad Request"))
+		return ctx.JSON(http.StatusBadRequest, utils.ToAPIError(errors.Wrap(err, "Bad Request")))
 	}
 
 	customer, err := w.store.UpdateCustomerById(FromAPICustomerToModelsCustomer(req), id)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError, utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	return ctx.JSON(http.StatusOK, FromModelsCustomerToAPICustomer(customer))
 }
@@ -114,7 +115,7 @@ func (w *WebStoreServer) GetOrders(ctx echo.Context, params api.GetOrdersParams)
 	}
 	orders, err := w.store.GetOrders(limit, offset, status, paymentStatus)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError, utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	return ctx.JSON(http.StatusOK, FromModelsOrderListToAPIOrderList(orders))
 }
@@ -125,34 +126,37 @@ func (w *WebStoreServer) CreateOrder(ctx echo.Context) error {
 		lineMap = make(map[uuid.UUID]api.LineItem)
 	)
 	if err := ctx.Bind(&req); err != nil {
-		return ctx.JSON(http.StatusBadRequest, errors.Wrap(err, "Bad Request"))
+		return ctx.JSON(http.StatusBadRequest, utils.ToAPIError(errors.Wrap(err, "Bad Request")))
 	}
 	if req.CustomerId == 0 {
-		return ctx.JSON(http.StatusBadRequest, "Customer ID is required")
+		return ctx.JSON(http.StatusBadRequest, utils.ToAPIError("Customer ID is required"))
 	}
 	// Check for line item duplicates
 	for _, line := range req.Products {
 		if _, ok := lineMap[line.Id]; ok {
-			return ctx.JSON(http.StatusBadRequest, "Duplicate line items")
+			return ctx.JSON(http.StatusBadRequest, utils.ToAPIError("Duplicate line items"))
 		}
 		lineMap[line.Id] = line
 	}
 	// Create order
 	order, err := w.store.CreateOrder(FromAPIOrderToModelsOrder(req))
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	// Send email
 	customer, err := w.store.GetCustomerById(req.CustomerId)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	err = w.sender.Send(
 		types.Contact{Name: "YAWS", Email: "yaws@example.com"},
 		types.Contact{Name: customer.Name, Email: customer.Email},
 		"Order Confirmation", "Your order has been received")
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 
 	return ctx.JSON(http.StatusOK, FromModelsOrderToAPIOrder(order))
@@ -161,7 +165,8 @@ func (w *WebStoreServer) CreateOrder(ctx echo.Context) error {
 func (w *WebStoreServer) GetOrderById(ctx echo.Context, id uuid.UUID) error {
 	order, err := w.store.GetOrderById(id)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 
 	return ctx.JSON(http.StatusOK, FromModelsOrderToAPIOrder(order))
@@ -172,23 +177,26 @@ func (w *WebStoreServer) UpdateOrderStatus(ctx echo.Context, id uuid.UUID) error
 		req api.OrderStatus
 	)
 	if err := ctx.Bind(&req); err != nil {
-		return ctx.JSON(http.StatusBadRequest, errors.Wrap(err, "Bad Request"))
+		return ctx.JSON(http.StatusBadRequest, utils.ToAPIError(errors.Wrap(err, "Bad Request")))
 	}
 
 	order, err := w.store.UpdateOrderStatus(FromAPIOrderStatusToModelsOrderStatus(req, id))
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	customer, err := w.store.GetCustomerById(order.CustomerID)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	err = w.sender.Send(
 		types.Contact{Name: "YAWS", Email: "yaws@example.com"},
 		types.Contact{Name: customer.Name, Email: customer.Email},
 		"Order Status update", "Your order has been updated")
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	return ctx.JSON(http.StatusOK, FromModelsOrderToAPIOrder(order))
 }
@@ -198,31 +206,35 @@ func (w *WebStoreServer) PaymentWebhook(ctx echo.Context) error {
 		req api.Webhook
 	)
 	if err := ctx.Bind(&req); err != nil {
-		return ctx.JSON(http.StatusBadRequest, errors.Wrap(err, "Bad Request"))
+		return ctx.JSON(http.StatusBadRequest, utils.ToAPIError(errors.Wrap(err, "Bad Request")))
 	}
 	// Primitive check for customer ID
 	if ctx.Request().Header.Get("X-Customer-Id") != "123" {
-		return ctx.JSON(http.StatusUnauthorized, "Unauthorized")
+		return ctx.JSON(http.StatusUnauthorized, utils.ToAPIError("Unauthorized"))
 	}
 	//
 	err := w.store.PaymentWebhook(FromAPIWebhookToModelsWebhook(req))
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	order, err := w.store.GetOrderById(req.OrderId)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	customer, err := w.store.GetCustomerById(order.CustomerID)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	err = w.sender.Send(
 		types.Contact{Name: "YAWS", Email: "yaws@example.com"},
 		types.Contact{Name: customer.Name, Email: customer.Email},
 		"Payment Status update", "Your payment was received")
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 
 	return ctx.JSON(http.StatusOK, "Payment webhook received")
@@ -244,7 +256,8 @@ func (w *WebStoreServer) GetProducts(ctx echo.Context, params api.GetProductsPar
 
 	products, err := w.store.GetProducts(limit, offset, minQuantity)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	return ctx.JSON(http.StatusOK, FromModelsProductListToAPIProductList(products))
 }
@@ -255,32 +268,38 @@ func (w *WebStoreServer) AddProducts(ctx echo.Context) error {
 		productMap = make(map[uuid.UUID]api.Product)
 	)
 	if err := ctx.Bind(&req); err != nil {
-		return ctx.JSON(http.StatusBadRequest, errors.Wrap(err, "Bad Request"))
+		return ctx.JSON(http.StatusBadRequest,
+			utils.ToAPIError(errors.Wrap(err, "Bad Request")))
 	}
 	if len(req) == 0 {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return ctx.JSON(http.StatusBadRequest,
+			utils.ToAPIError("Bad Request"))
 	}
 	// Validate product list
 	for _, product := range req {
 		if product.Quantity <= 0 {
-			return ctx.JSON(http.StatusBadRequest, "Quantity must be greater than 0")
+			return ctx.JSON(http.StatusBadRequest,
+				utils.ToAPIError("Quantity must be greater than 0"))
 		}
 		price, err := decimal.NewFromString(product.Price)
 		if err != nil {
-			return ctx.JSON(http.StatusBadRequest, "Invalid price")
+			return ctx.JSON(http.StatusBadRequest,
+				utils.ToAPIError("Invalid price"))
 		}
 		if price.LessThanOrEqual(decimal.NewFromInt(0)) {
 			return ctx.JSON(http.StatusBadRequest, "Price must be greater than 0")
 		}
 		if _, ok := productMap[product.Id]; ok {
-			return ctx.JSON(http.StatusBadRequest, "Duplicate products")
+			return ctx.JSON(http.StatusBadRequest,
+				utils.ToAPIError("Duplicate products"))
 		}
 		productMap[product.Id] = product
 	}
 	//
 	products, err := w.store.AddProducts(FromAPIProductListToModelsProductList(req))
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	return ctx.JSON(http.StatusOK, FromModelsProductListToAPIProductList(products))
 }
@@ -289,9 +308,11 @@ func (w *WebStoreServer) DeleteProductById(ctx echo.Context, id uuid.UUID) error
 	product, err := w.store.DeleteProductById(id)
 	if err != nil {
 		if err.Error() == "record not found" {
-			return ctx.JSON(http.StatusNotFound, errors.Wrap(err, "Not Found"))
+			return ctx.JSON(http.StatusNotFound,
+				utils.ToAPIError(errors.Wrap(err, "Not Found")))
 		}
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	return ctx.JSON(http.StatusOK, FromModelsProductToAPIProduct(product))
 }
@@ -299,7 +320,8 @@ func (w *WebStoreServer) DeleteProductById(ctx echo.Context, id uuid.UUID) error
 func (w *WebStoreServer) GetProductById(ctx echo.Context, id uuid.UUID) error {
 	product, err := w.store.GetProductById(id)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	return ctx.JSON(http.StatusOK, FromModelsProductToAPIProduct(product))
 }
@@ -309,12 +331,14 @@ func (w *WebStoreServer) UpdateProductById(ctx echo.Context, id uuid.UUID) error
 		req api.Product
 	)
 	if err := ctx.Bind(&req); err != nil {
-		return ctx.JSON(http.StatusBadRequest, errors.Wrap(err, "Bad Request"))
+		return ctx.JSON(http.StatusBadRequest,
+			utils.ToAPIError(errors.Wrap(err, "Bad Request")))
 	}
 
 	product, err := w.store.UpdateProductById(FromAPIProductToModelsProduct(req), id)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errors.Wrap(err, "Internal Server Error"))
+		return ctx.JSON(http.StatusInternalServerError,
+			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
 	return ctx.JSON(http.StatusOK, FromModelsProductToAPIProduct(product))
 }

@@ -30,5 +30,4 @@ The API documentation is available at `http://localhost:8080/docs/`.
 ## TODOs
 
 - Order -> Product association
-- JSON errors
 - Tests
