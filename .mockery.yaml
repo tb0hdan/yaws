@@ -5,3 +5,7 @@ packages:
     config:
     interfaces:
       Store:
+  yaws/internal/transactional:
+    config:
+    interfaces:
+      Transactional:
