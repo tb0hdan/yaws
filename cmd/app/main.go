@@ -10,6 +10,8 @@ import (
 	"yaws/internal/store"
 	"yaws/internal/transactional"
 
+	"yaws/pkg/utils"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog"
@@ -59,5 +61,5 @@ func main() {
 
 	api.RegisterHandlers(e, &srv)
 
-	server.Run(e)
+	utils.Run(e)
 }

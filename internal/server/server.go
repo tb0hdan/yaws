@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"yaws/internal/server/api"
+	"yaws/internal/store"
 	"yaws/internal/transactional"
 	"yaws/pkg/types"
 	"yaws/pkg/utils"
@@ -27,7 +28,7 @@ const (
 type WebStoreServer struct {
 	// This is a placeholder for the server
 	logger zerolog.Logger
-	store  types.Store
+	store  store.Store //types.Store
 	sender transactional.Transactional
 }
 
@@ -343,6 +344,6 @@ func (w *WebStoreServer) UpdateProductById(ctx echo.Context, id uuid.UUID) error
 	return ctx.JSON(http.StatusOK, FromModelsProductToAPIProduct(product))
 }
 
-func NewWebStoreServer(logger zerolog.Logger, store types.Store, sender transactional.Transactional) WebStoreServer {
+func NewWebStoreServer(logger zerolog.Logger, store store.Store, sender transactional.Transactional) WebStoreServer {
 	return WebStoreServer{logger: logger, store: store, sender: sender}
 }
