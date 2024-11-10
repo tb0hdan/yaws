@@ -9,8 +9,10 @@ import (
 
 	"yaws/internal/server/api"
 	"yaws/internal/store/postgresql/models"
+	transactionalReal "yaws/internal/transactional"
 	"yaws/mocks/yaws/int/store"
 	"yaws/mocks/yaws/int/transactional"
+	"yaws/pkg/types"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -25,6 +27,8 @@ type ServerTestSuite struct {
 	mockStorage       *store.MockStore
 	mockTransactional *transactional.MockTransactional
 	logger            zerolog.Logger
+	// real Sender
+	sender *transactionalReal.Sender
 }
 
 func TestServerTestSuite(t *testing.T) {
@@ -34,6 +38,10 @@ func TestServerTestSuite(t *testing.T) {
 func (ts *ServerTestSuite) SetupSuite() {
 	ts.mockStorage = new(store.MockStore)
 	ts.mockTransactional = new(transactional.MockTransactional)
+	ts.sender = &transactionalReal.Sender{Transactional: ts.mockTransactional, FromContact: types.Contact{
+		Name:  "YAWS",
+		Email: "yaws@example.com",
+	}}
 	ts.logger = zerolog.New(os.Stderr)
 }
 
@@ -47,7 +55,7 @@ func (ts *ServerTestSuite) TearDownSuite() {
 }
 
 func (ts *ServerTestSuite) TestGetCustomers() {
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -65,7 +73,7 @@ func (ts *ServerTestSuite) TestGetCustomers() {
 }
 
 func (ts *ServerTestSuite) TestAddCustomers() {
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -80,7 +88,7 @@ func (ts *ServerTestSuite) TestAddCustomers() {
 }
 
 func (ts *ServerTestSuite) TestDeleteCustomerById() {
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -98,7 +106,7 @@ func (ts *ServerTestSuite) TestDeleteCustomerById() {
 }
 
 func (ts *ServerTestSuite) TestGetCustomerById() {
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -116,7 +124,7 @@ func (ts *ServerTestSuite) TestGetCustomerById() {
 }
 
 func (ts *ServerTestSuite) TestUpdateCustomerById() {
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -134,7 +142,7 @@ func (ts *ServerTestSuite) TestUpdateCustomerById() {
 }
 
 func (ts *ServerTestSuite) TestGetOrders() {
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -152,7 +160,7 @@ func (ts *ServerTestSuite) TestGetOrders() {
 }
 
 func (ts *ServerTestSuite) TestCreateOrder() {
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -170,7 +178,7 @@ func (ts *ServerTestSuite) TestGetOrderById() {
 	var (
 		testOrderId = uuid.New()
 	)
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -193,7 +201,7 @@ func (ts *ServerTestSuite) TestUpdateOrderStatus() {
 	var (
 		testOrderId = uuid.New()
 	)
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -219,7 +227,7 @@ func (ts *ServerTestSuite) TestUpdateOrderStatus() {
 }
 
 func (ts *ServerTestSuite) TestPaymentWebhook() {
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -234,7 +242,7 @@ func (ts *ServerTestSuite) TestPaymentWebhook() {
 }
 
 func (ts *ServerTestSuite) TestGetProducts() {
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -252,7 +260,7 @@ func (ts *ServerTestSuite) TestGetProducts() {
 }
 
 func (ts *ServerTestSuite) TestAddProducts() {
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -270,7 +278,7 @@ func (ts *ServerTestSuite) TestDeleteProductById() {
 	var (
 		testProductId = uuid.New()
 	)
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -293,7 +301,7 @@ func (ts *ServerTestSuite) TestGetProductById() {
 	var (
 		testProductId = uuid.New()
 	)
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -317,7 +325,7 @@ func (ts *ServerTestSuite) TestUpdateProductById() {
 	var (
 		testProductId = uuid.New()
 	)
-	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.mockTransactional)
+	server := NewWebStoreServer(ts.logger, ts.mockStorage, ts.sender)
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"id":"`+testProductId.String()+`"}`))

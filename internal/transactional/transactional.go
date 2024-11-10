@@ -16,12 +16,12 @@ type Transactional interface {
 
 type Sender struct {
 	Transactional
-	fromContact types.Contact
+	FromContact types.Contact
 }
 
 func (s *Sender) SendSimple(customer models.Customer, subject, message string) error {
 	return s.Send(
-		s.fromContact,
+		s.FromContact,
 		types.Contact{Name: customer.Name, Email: customer.Email},
 		subject,
 		message,
@@ -33,7 +33,7 @@ func New(senderType, apiKey string, fromContact types.Contact) *Sender {
 	case SendGrid:
 		return &Sender{
 			Transactional: sendgrid.New(apiKey),
-			fromContact:   fromContact,
+			FromContact:   fromContact,
 		}
 	default:
 		return nil
