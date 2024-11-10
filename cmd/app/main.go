@@ -9,6 +9,7 @@ import (
 	"yaws/internal/server/api"
 	"yaws/internal/store"
 	"yaws/internal/transactional"
+	"yaws/pkg/types"
 
 	"yaws/pkg/utils"
 
@@ -55,7 +56,12 @@ func main() {
 		logger.Fatal().Err(err).Msg("Failed to connect to storage")
 	}
 
-	sender := transactional.New(transactional.SendGrid, "SENDGRID_API_KEY")
+	sender := transactional.New(transactional.SendGrid,
+		os.Getenv("SENDGRID_API_KEY"),
+		types.Contact{
+			Name:  "YAWS",
+			Email: "yaws@example.com",
+		})
 
 	srv := server.NewWebStoreServer(logger, storage, sender)
 

@@ -6,7 +6,6 @@ import (
 	"yaws/internal/server/api"
 	"yaws/internal/store"
 	"yaws/internal/transactional"
-	"yaws/pkg/types"
 	"yaws/pkg/utils"
 
 	"github.com/google/uuid"
@@ -28,8 +27,8 @@ const (
 type WebStoreServer struct {
 	// This is a placeholder for the server
 	logger zerolog.Logger
-	store  store.Store //types.Store
-	sender transactional.Transactional
+	store  store.Store
+	sender *transactional.Sender
 }
 
 func (w *WebStoreServer) GetCustomers(ctx echo.Context, params api.GetCustomersParams) error {
@@ -151,9 +150,7 @@ func (w *WebStoreServer) CreateOrder(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError,
 			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
-	err = w.sender.Send(
-		types.Contact{Name: "YAWS", Email: "yaws@example.com"},
-		types.Contact{Name: customer.Name, Email: customer.Email},
+	err = w.sender.SendSimple(customer,
 		"Order Confirmation", "Your order has been received")
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError,
@@ -191,9 +188,7 @@ func (w *WebStoreServer) UpdateOrderStatus(ctx echo.Context, id uuid.UUID) error
 		return ctx.JSON(http.StatusInternalServerError,
 			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
-	err = w.sender.Send(
-		types.Contact{Name: "YAWS", Email: "yaws@example.com"},
-		types.Contact{Name: customer.Name, Email: customer.Email},
+	err = w.sender.SendSimple(customer,
 		"Order Status update", "Your order has been updated")
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError,
@@ -229,9 +224,7 @@ func (w *WebStoreServer) PaymentWebhook(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError,
 			utils.ToAPIError(errors.Wrap(err, "Internal Server Error")))
 	}
-	err = w.sender.Send(
-		types.Contact{Name: "YAWS", Email: "yaws@example.com"},
-		types.Contact{Name: customer.Name, Email: customer.Email},
+	err = w.sender.SendSimple(customer,
 		"Payment Status update", "Your payment was received")
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError,
@@ -344,6 +337,6 @@ func (w *WebStoreServer) UpdateProductById(ctx echo.Context, id uuid.UUID) error
 	return ctx.JSON(http.StatusOK, FromModelsProductToAPIProduct(product))
 }
 
-func NewWebStoreServer(logger zerolog.Logger, store store.Store, sender transactional.Transactional) WebStoreServer {
+func NewWebStoreServer(logger zerolog.Logger, store store.Store, sender *transactional.Sender) WebStoreServer {
 	return WebStoreServer{logger: logger, store: store, sender: sender}
 }
